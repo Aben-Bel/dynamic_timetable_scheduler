@@ -212,13 +212,15 @@
 <body>
 <div class="layout">
     <div class="header">
-        <h1>🎓 Schedule Optimizer</h1>
+        <h1> Schedule Optimizer</h1>
         <div>
+            <button class="btn btn-secondary" onclick="preloadExample()">Load example data</button>
             <button class="btn btn-primary" id="runBtn" onclick="runSolver()" disabled>
                 ▶ Optimize schedule
             </button>
         </div>
     </div>
+
 
     <!-- LEFT: Solver + Timetable -->
     <div class="card">
@@ -367,7 +369,7 @@
 </div>
 
 <script>
-    const API = "http://127.0.0.1:3000";
+    const API = window.location.origin;
 
     const itemsMeta = {}; // name -> { item_set_type, fields, members }
 
@@ -389,6 +391,186 @@
     let editingMemberItem = null;
     let editingMemberId = null;
     let editingConstraintOriginalName = null;
+
+    async function preloadExample() {
+    log("Loading example data…");
+
+    const post = async (path, body) => {
+        try {
+            const res = await fetch(`${API}${path}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+                console.log("POST failed", path, await res.text());
+            }
+        } catch (e) {
+            console.log("POST error", path, e);
+        }
+    };
+
+    // ITEMS
+    await post("/items", {
+        name: "Course",
+        item_set_type: "B_Set",
+        schema: {
+            definitions: {
+                name: { field_name: "name", field_type: "Text", is_required: true },
+                duration: { field_name: "duration", field_type: "Integer", is_required: true },
+            },
+        },
+    });
+
+    await post("/items", {
+        name: "Room",
+        item_set_type: "E_Set",
+        schema: {
+            definitions: {
+                name: { field_name: "name", field_type: "Text", is_required: true },
+                capacity: { field_name: "capacity", field_type: "Integer", is_required: true },
+            },
+        },
+    });
+
+    await post("/items", {
+        name: "TimeSlot",
+        item_set_type: "E_Set",
+        schema: {
+            definitions: {
+                day: { field_name: "day", field_type: "Text", is_required: true },
+                start: { field_name: "start", field_type: "DateTime", is_required: true },
+                end: { field_name: "end", field_type: "DateTime", is_required: true },
+            },
+        },
+    });
+
+    await post("/items", {
+        name: "Lecturer",
+        item_set_type: "E_Set",
+        schema: {
+            definitions: {
+                name: { field_name: "name", field_type: "Text", is_required: true },
+            },
+        },
+    });
+
+    // MEMBERS: Course
+    await post("/items/Course/members", { id: 1, fields: { name: { String: "Photogrammetric Computer Vision (L)" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 2, fields: { name: { String: "Photogrammetric Computer Vision (E)" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 3, fields: { name: { String: "HCI Theory & Methods" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 4, fields: { name: { String: "Security Engineering" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 5, fields: { name: { String: "Deep Learning for Computer Vision" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 6, fields: { name: { String: "Formal Methods for Software Engineering" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 7, fields: { name: { String: "Online Computation" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 8, fields: { name: { String: "Methods of Social Data Analysis" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 9, fields: { name: { String: "Academic English" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 10, fields: { name: { String: "Spatial Information Systems / GIS" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 11, fields: { name: { String: "Introduction to Machine Learning" }, duration: { Number: 90 } } });
+    await post("/items/Course/members", { id: 12, fields: { name: { String: "Virtual Reality" }, duration: { Number: 90 } } });
+
+    // MEMBERS: Room
+    await post("/items/Room/members", { id: 1, fields: { name: { String: "B11" }, capacity: { Number: 50 } } });
+    await post("/items/Room/members", { id: 2, fields: { name: { String: "SR_A" }, capacity: { Number: 30 } } });
+    await post("/items/Room/members", { id: 3, fields: { name: { String: "SR_H" }, capacity: { Number: 25 } } });
+    await post("/items/Room/members", { id: 4, fields: { name: { String: "LH_HK7" }, capacity: { Number: 100 } } });
+
+    // MEMBERS: TimeSlot
+    await post("/items/TimeSlot/members", { id: 1, fields: { day: { String: "Monday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
+    await post("/items/TimeSlot/members", { id: 2, fields: { day: { String: "Monday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
+    await post("/items/TimeSlot/members", { id: 3, fields: { day: { String: "Monday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
+    await post("/items/TimeSlot/members", { id: 4, fields: { day: { String: "Monday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
+    await post("/items/TimeSlot/members", { id: 5, fields: { day: { String: "Monday" }, start: { Date: "17:00" }, end: { Date: "18:30" } } });
+    await post("/items/TimeSlot/members", { id: 6, fields: { day: { String: "Tuesday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
+    await post("/items/TimeSlot/members", { id: 7, fields: { day: { String: "Tuesday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
+    await post("/items/TimeSlot/members", { id: 8, fields: { day: { String: "Tuesday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
+    await post("/items/TimeSlot/members", { id: 9, fields: { day: { String: "Tuesday" }, start: { Date: "17:00" }, end: { Date: "18:30" } } });
+    await post("/items/TimeSlot/members", { id: 10, fields: { day: { String: "Wednesday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
+    await post("/items/TimeSlot/members", { id: 11, fields: { day: { String: "Wednesday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
+    await post("/items/TimeSlot/members", { id: 12, fields: { day: { String: "Wednesday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
+    await post("/items/TimeSlot/members", { id: 13, fields: { day: { String: "Wednesday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
+    await post("/items/TimeSlot/members", { id: 14, fields: { day: { String: "Thursday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
+    await post("/items/TimeSlot/members", { id: 15, fields: { day: { String: "Thursday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
+    await post("/items/TimeSlot/members", { id: 16, fields: { day: { String: "Thursday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
+    await post("/items/TimeSlot/members", { id: 17, fields: { day: { String: "Thursday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
+    await post("/items/TimeSlot/members", { id: 18, fields: { day: { String: "Friday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
+    await post("/items/TimeSlot/members", { id: 19, fields: { day: { String: "Friday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
+    await post("/items/TimeSlot/members", { id: 20, fields: { day: { String: "Friday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
+    await post("/items/TimeSlot/members", { id: 21, fields: { day: { String: "Friday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
+
+    // MEMBERS: Lecturer
+    await post("/items/Lecturer/members", { id: 1, fields: { name: { String: "Prof. Rodehorst" } } });
+    await post("/items/Lecturer/members", { id: 2, fields: { name: { String: "Prof. Ringert" } } });
+    await post("/items/Lecturer/members", { id: 3, fields: { name: { String: "PD Dr. Jakoby / R. Adejoh" } } });
+    await post("/items/Lecturer/members", { id: 4, fields: { name: { String: "Prof. Jakesch" } } });
+    await post("/items/Lecturer/members", { id: 5, fields: { name: { String: "Prof. Stein" } } });
+    await post("/items/Lecturer/members", { id: 6, fields: { name: { String: "Prof. Fröhlich" } } });
+    await post("/items/Lecturer/members", { id: 7, fields: { name: { String: "Prof. Hornecker" } } });
+    await post("/items/Lecturer/members", { id: 8, fields: { name: { String: "Prof. Lucks" } } });
+    await post("/items/Lecturer/members", { id: 9, fields: { name: { String: "J. Eick / A. Frolov / D. Tschirschwitz" } } });
+    await post("/items/Lecturer/members", { id: 10, fields: { name: { String: "Dr. Atkinson" } } });
+    await post("/items/Lecturer/members", { id: 11, fields: { name: { String: "J. Leuther" } } });
+    await post("/items/Lecturer/members", { id: 12, fields: { name: { String: "T. Gebhardt" } } });
+
+    // CONSTRAINTS
+    await post("/constraints", {
+        constraint: {
+            name: "No Room Conflicts",
+            weight: 100,
+            rule: {
+                GlobalAllDifferent: {
+                    unique_item_field: "Room:id",
+                    group_item_field: "TimeSlot:id",
+                },
+            },
+        },
+    });
+
+    await post("/constraints", {
+        constraint: {
+            name: "No Lecturer Conflicts",
+            weight: 100,
+            rule: {
+                GlobalAllDifferent: {
+                    unique_item_field: "Lecturer:id",
+                    group_item_field: "TimeSlot:id",
+                },
+            },
+        },
+    });
+
+    await post("/constraints", {
+        constraint: {
+            name: "No Friday Afternoon",
+            weight: 10,
+            rule: {
+                MultiAssignmentCheck: {
+                    conditions: [
+                        {
+                            item_name: "TimeSlot",
+                            field_key: "day",
+                            operator: "Equal",
+                            target_values: ["Friday"],
+                        },
+                        {
+                            item_name: "TimeSlot",
+                            field_key: "start",
+                            operator: "GreaterThanOrEqual",
+                            target_values: ["15:00"],
+                        },
+                    ],
+                    logical_op: "And",
+                    mode: "Forbid",
+                },
+            },
+        },
+    });
+
+    log("Example data loaded.");
+    await loadItemsAndMembers();
+    await loadConstraints();
+}
+
 
     function log(msg) {
         const logEl = document.getElementById("statusLog");
