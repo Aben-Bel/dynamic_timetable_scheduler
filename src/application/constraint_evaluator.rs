@@ -118,29 +118,110 @@ fn evaluate_condition(
 
 fn compare_value(value: &Value, operator: &ComparisonOperator, targets: &[String]) -> bool {
     match (value, operator) {
-        (Value::Number(n), ComparisonOperator::Equal) => {
-            targets.iter().any(|t| t.parse::<i32>().ok() == Some(*n))
+        // ---------- Numbers ----------
+        (Value::Number(n), op) => {
+            // parse all targets as i32 (ignore ones that fail to parse)
+            let parsed: Vec<i32> = targets
+                .iter()
+                .filter_map(|t| t.parse::<i32>().ok())
+                .collect();
+
+            if parsed.is_empty() {
+                return false;
+            }
+
+            match op {
+                ComparisonOperator::Equal => parsed.iter().any(|t| n == t),
+                ComparisonOperator::NotEqual => parsed.iter().all(|t| n != t),
+                ComparisonOperator::In => parsed.iter().any(|t| n == t),
+                ComparisonOperator::NotIn => parsed.iter().all(|t| n != t),
+
+                ComparisonOperator::GreaterThan => parsed.iter().any(|t| n > t),
+                ComparisonOperator::GreaterThanOrEqual => parsed.iter().any(|t| n >= t),
+                ComparisonOperator::LessThan => parsed.iter().any(|t| n < t),
+                ComparisonOperator::LessThanOrEqual => parsed.iter().any(|t| n <= t),
+
+                // Before / After / Overlap / NoOverlap don't have a useful numeric meaning here
+                _ => false,
+            }
         }
-        (Value::Number(n), ComparisonOperator::In) => {
-            targets.iter().any(|t| t.parse::<i32>().ok() == Some(*n))
+
+        // ---------- Strings ----------
+        (Value::String(s), op) => {
+            if targets.is_empty() {
+                return false;
+            }
+
+            match op {
+                ComparisonOperator::Equal => targets.iter().any(|t| s == t),
+                ComparisonOperator::NotEqual => targets.iter().all(|t| s != t),
+                ComparisonOperator::In => targets.iter().any(|t| s == t),
+                ComparisonOperator::NotIn => targets.iter().all(|t| s != t),
+
+                // Lexicographic comparisons
+                ComparisonOperator::GreaterThan => targets.iter().any(|t| s > t),
+                ComparisonOperator::GreaterThanOrEqual => targets.iter().any(|t| s >= t),
+                ComparisonOperator::LessThan => targets.iter().any(|t| s < t),
+                ComparisonOperator::LessThanOrEqual => targets.iter().any(|t| s <= t),
+
+                // Temporal-ish operators on plain strings: treat as lexicographic dates/times if caller uses them
+                ComparisonOperator::Before => targets.iter().any(|t| s < t),
+                ComparisonOperator::After => targets.iter().any(|t| s > t),
+
+                // Overlap / NoOverlap on strings: treat targets as a range [min, max]
+                ComparisonOperator::Overlap => {
+                    let min = targets.iter().min().unwrap();
+                    let max = targets.iter().max().unwrap();
+                    s >= min && s <= max
+                }
+                ComparisonOperator::NoOverlap => {
+                    let min = targets.iter().min().unwrap();
+                    let max = targets.iter().max().unwrap();
+                    s < min || s > max
+                }
+            }
         }
-        (Value::Number(n), ComparisonOperator::GreaterThan) => {
-            targets.iter().any(|t| t.parse::<i32>().ok().map(|t| n > &t).unwrap_or(false))
+
+        // ---------- Dates (stored as String, e.g. "13:30" or ISO) ----------
+        (Value::Date(d), op) => {
+            if targets.is_empty() {
+                return false;
+            }
+
+            match op {
+                ComparisonOperator::Equal => targets.iter().any(|t| d == t),
+                ComparisonOperator::NotEqual => targets.iter().all(|t| d != t),
+                ComparisonOperator::In => targets.iter().any(|t| d == t),
+                ComparisonOperator::NotIn => targets.iter().all(|t| d != t),
+
+                ComparisonOperator::GreaterThan => targets.iter().any(|t| d > t),
+                ComparisonOperator::GreaterThanOrEqual => targets.iter().any(|t| d >= t),
+                ComparisonOperator::LessThan => targets.iter().any(|t| d < t),
+                ComparisonOperator::LessThanOrEqual => targets.iter().any(|t| d <= t),
+
+                // For scalar dates, Before / After are just < and >
+                ComparisonOperator::Before => targets.iter().any(|t| d < t),
+                ComparisonOperator::After => targets.iter().any(|t| d > t),
+
+                // Overlap / NoOverlap: treat targets as an interval [min, max]
+                ComparisonOperator::Overlap => {
+                    let min = targets.iter().min().unwrap();
+                    let max = targets.iter().max().unwrap();
+                    d >= min && d <= max
+                }
+                ComparisonOperator::NoOverlap => {
+                    let min = targets.iter().min().unwrap();
+                    let max = targets.iter().max().unwrap();
+                    d < min || d > max
+                }
+            }
         }
-        (Value::Number(n), ComparisonOperator::GreaterThanOrEqual) => {
-            targets.iter().any(|t| t.parse::<i32>().ok().map(|t| n >= &t).unwrap_or(false))
-        }
-        (Value::Number(n), ComparisonOperator::LessThan) => {
-            targets.iter().any(|t| t.parse::<i32>().ok().map(|t| n < &t).unwrap_or(false))
-        }
-        (Value::String(s), ComparisonOperator::Equal) => targets.contains(s),
-        (Value::String(s), ComparisonOperator::In) => targets.contains(s),
-        (Value::Date(d), ComparisonOperator::GreaterThanOrEqual) => {
-            targets.iter().any(|t| d >= t)
-        }
+
+        // Any other combination is unsupported
         _ => false,
     }
 }
+
 
 fn evaluate_all_different(
     schedule: &Schedule,
@@ -252,43 +333,83 @@ fn check_temporal_relation(
     relation: &ComparisonOperator,
     temporal_fields: &[String],
 ) -> bool {
-    if temporal_fields.len() != 2 {
+    if temporal_fields.is_empty() || temporal_fields.len() > 2 {
         return false;
     }
-    
-    // Assuming temporal fields come from TimeSlot
+
     let first_time_id = match first.resources.get("TimeSlot") {
         Some(&id) => id,
         None => return false,
     };
-    
     let second_time_id = match second.resources.get("TimeSlot") {
         Some(&id) => id,
         None => return false,
     };
-    
+
     let time_item = match problem_data.item_categories.get("TimeSlot") {
         Some(i) => i,
         None => return false,
     };
-    
-    let first_member = time_item.members.iter().find(|m| m.id == first_time_id);
-    let second_member = time_item.members.iter().find(|m| m.id == second_time_id);
-    
-    if let (Some(fm), Some(sm)) = (first_member, second_member) {
-        let first_val = fm.fields.get(&temporal_fields[0]);
-        let second_val = sm.fields.get(&temporal_fields[1]);
-        
-        if let (Some(Value::Date(fv)), Some(Value::Date(sv))) = (first_val, second_val) {
-            match relation {
-                ComparisonOperator::Before => fv < sv,
-                _ => false,
-            }
-        } else {
-            false
-        }
+
+    let first_member = match time_item.members.iter().find(|m| m.id == first_time_id) {
+        Some(m) => m,
+        None => return false,
+    };
+    let second_member = match time_item.members.iter().find(|m| m.id == second_time_id) {
+        Some(m) => m,
+        None => return false,
+    };
+
+    // Extract start/end strings
+    let (first_start, first_end, second_start, second_end) = if temporal_fields.len() == 1 {
+        let field = &temporal_fields[0];
+        let fs = match first_member.fields.get(field) {
+            Some(Value::Date(v)) => v.as_str(),
+            _ => return false,
+        };
+        let ss = match second_member.fields.get(field) {
+            Some(Value::Date(v)) => v.as_str(),
+            _ => return false,
+        };
+        (fs, fs, ss, ss)
     } else {
-        false
+        let start_field = &temporal_fields[0];
+        let end_field = &temporal_fields[1];
+
+        let fs = match first_member.fields.get(start_field) {
+            Some(Value::Date(v)) => v.as_str(),
+            _ => return false,
+        };
+        let fe = match first_member.fields.get(end_field) {
+            Some(Value::Date(v)) => v.as_str(),
+            _ => return false,
+        };
+        let ss = match second_member.fields.get(start_field) {
+            Some(Value::Date(v)) => v.as_str(),
+            _ => return false,
+        };
+        let se = match second_member.fields.get(end_field) {
+            Some(Value::Date(v)) => v.as_str(),
+            _ => return false,
+        };
+
+        (fs, fe, ss, se)
+    };
+
+    match relation {
+        ComparisonOperator::Before => first_end < second_start,
+        ComparisonOperator::After => first_start > second_end,
+        ComparisonOperator::Overlap => first_start < second_end && second_start < first_end,
+        ComparisonOperator::NoOverlap => !(first_start < second_end && second_start < first_end),
+
+        ComparisonOperator::Equal => first_start == second_start,
+        ComparisonOperator::NotEqual => first_start != second_start,
+        ComparisonOperator::GreaterThan => first_start > second_start,
+        ComparisonOperator::GreaterThanOrEqual => first_start >= second_start,
+        ComparisonOperator::LessThan => first_start < second_start,
+        ComparisonOperator::LessThanOrEqual => first_start <= second_start,
+
+        _ => false,
     }
 }
 
