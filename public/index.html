@@ -1,597 +1,1085 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Schedule Optimizer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #f5f5f5;
-            color: #222;
-        }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #f5f5f5;
+        color: #222;
+      }
 
-        .layout {
-            display: grid;
-            grid-template-columns: 2fr 1.3fr;
-            grid-template-rows: auto 1fr;
-            gap: 10px;
-            padding: 10px;
-            height: 100vh;
-        }
+      .layout {
+        display: grid;
+        grid-template-columns: 2fr 1.3fr;
+        grid-template-rows: auto 1fr;
+        gap: 10px;
+        padding: 10px;
+        height: 100vh;
+      }
 
-        .header {
-            grid-column: 1 / -1;
-            background: #2c3e50;
-            color: #fff;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 14px;
-        }
+      .header {
+        grid-column: 1 / -1;
+        background: #2c3e50;
+        color: #fff;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+      }
 
-        .header h1 {
-            font-size: 18px;
-        }
+      .header h1 {
+        font-size: 18px;
+      }
 
-        .btn {
-            padding: 5px 10px;
-            border-radius: 4px;
-            border: none;
-            font-size: 13px;
-            cursor: pointer;
-        }
+      .btn {
+        padding: 5px 10px;
+        border-radius: 4px;
+        border: none;
+        font-size: 13px;
+        cursor: pointer;
+      }
 
-        .btn-primary {
-            background: #27ae60;
-            color: #fff;
-        }
-        .btn-secondary {
-            background: #3498db;
-            color: #fff;
-        }
-        .btn-small {
-            font-size: 12px;
-            padding: 3px 7px;
-        }
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+      .btn-primary {
+        background: #27ae60;
+        color: #fff;
+      }
+      .btn-secondary {
+        background: #3498db;
+        color: #fff;
+      }
+      .btn-small {
+        font-size: 12px;
+        padding: 3px 7px;
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
-        .card {
-            background: #fff;
-            border-radius: 6px;
-            padding: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+      .card {
+        background: #fff;
+        border-radius: 6px;
+        padding: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
 
-        .card h2 {
-            font-size: 15px;
-            margin-bottom: 4px;
-        }
+      .card h2 {
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
 
-        .small {
-            font-size: 12px;
-            color: #666;
-        }
+      .small {
+        font-size: 12px;
+        color: #666;
+      }
 
-        .row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 4px;
-            flex-wrap: wrap;
-        }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 4px;
+        flex-wrap: wrap;
+      }
 
-        .field {
-            display: flex;
-            flex-direction: column;
-            font-size: 12px;
-        }
+      .field {
+        display: flex;
+        flex-direction: column;
+        font-size: 12px;
+      }
 
-        .field label {
-            margin-bottom: 2px;
-        }
+      .field label {
+        margin-bottom: 2px;
+      }
 
-        .field input,
-        .field select {
-            padding: 4px 6px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 12px;
-        }
+      .field input,
+      .field select {
+        padding: 4px 6px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 12px;
+      }
 
-        .field input[type="number"] {
-            width: 80px;
-        }
+      .field input[type="number"] {
+        width: 80px;
+      }
 
-        .status-log {
-            margin-top: 6px;
-            background: #111;
-            color: #ddd;
-            border-radius: 4px;
-            padding: 6px;
-            font-family: monospace;
-            font-size: 11px;
-            max-height: 120px;
-            overflow-y: auto;
-        }
+      .status-log {
+        margin-top: 6px;
+        background: #111;
+        color: #ddd;
+        border-radius: 4px;
+        padding: 6px;
+        font-family: monospace;
+        font-size: 11px;
+        max-height: 120px;
+        overflow-y: auto;
+      }
 
-        .status-log p { margin: 1px 0; }
+      .status-log p {
+        margin: 1px 0;
+      }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 12px;
-        }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12px;
+      }
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 4px 6px;
-            text-align: left;
-            vertical-align: top;
-        }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 4px 6px;
+        text-align: left;
+        vertical-align: top;
+      }
 
-        th {
-            background: #2c3e50;
-            color: #fff;
-            font-weight: 600;
-            white-space: nowrap;
-        }
+      th {
+        background: #2c3e50;
+        color: #fff;
+        font-weight: 600;
+        white-space: nowrap;
+      }
 
-        tr:nth-child(even) td {
-            background: #f8f8f8;
-        }
+      tr:nth-child(even) td {
+        background: #f8f8f8;
+      }
 
-        .pill {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 11px;
-            background: #ecf0f1;
-            margin-right: 4px;
-        }
+      .pill {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 11px;
+        background: #ecf0f1;
+        margin-right: 4px;
+      }
 
-        .pill-strong {
-            background: #e74c3c;
-            color: #fff;
-        }
+      .pill-strong {
+        background: #e74c3c;
+        color: #fff;
+      }
 
-        .pill-soft {
-            background: #f1c40f;
-            color: #000;
-        }
+      .pill-soft {
+        background: #f1c40f;
+        color: #000;
+      }
 
-        .scroll {
-            overflow-y: auto;
-        }
+      .scroll {
+        overflow-y: auto;
+      }
 
-        .section-title {
-            margin-top: 6px;
-            margin-bottom: 3px;
-            font-size: 13px;
-            font-weight: 600;
-        }
+      .section-title {
+        margin-top: 6px;
+        margin-bottom: 3px;
+        font-size: 13px;
+        font-weight: 600;
+      }
 
-        .keyword-suggestions {
-            margin-top: 3px;
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
+      .keyword-suggestions {
+        margin-top: 3px;
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
 
-        .chip {
-            padding: 3px 8px;
-            border-radius: 10px;
-            border: 1px solid #3498db;
-            font-size: 11px;
-            cursor: pointer;
-            background: #ecf6ff;
-        }
+      .chip {
+        padding: 3px 8px;
+        border-radius: 10px;
+        border: 1px solid #3498db;
+        font-size: 11px;
+        cursor: pointer;
+        background: #ecf6ff;
+      }
 
-        .timetable-wrapper {
-            margin-top: 8px;
-            overflow-x: auto;
-        }
+      .timetable-wrapper {
+        margin-top: 8px;
+        overflow-x: auto;
+      }
 
-        .list-item {
-            padding: 4px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 12px;
-        }
-
+      .list-item {
+        padding: 4px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 12px;
+      }
     </style>
-</head>
-<body>
-<div class="layout">
-    <div class="header">
-        <h1> Schedule Optimizer</h1>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="header">
+        <h1>Schedule Optimizer</h1>
         <div>
-            <button class="btn btn-secondary" onclick="preloadExample()">Load example data</button>
-            <button class="btn btn-primary" id="runBtn" onclick="runSolver()" disabled>
-                ▶ Optimize schedule
-            </button>
+          <button class="btn btn-secondary" onclick="preloadExample()">
+            Load example data
+          </button>
+          <button
+            class="btn btn-primary"
+            id="runBtn"
+            onclick="runSolver()"
+            disabled
+          >
+            ▶ Optimize schedule
+          </button>
         </div>
-    </div>
+      </div>
 
-
-    <!-- LEFT: Solver + Timetable -->
-    <div class="card">
+      <!-- LEFT: Solver + Timetable -->
+      <div class="card">
         <h2>⚙️ Solver</h2>
-        <p class="small">1. Define items, members, constraints on the right. 2. Click “Optimize schedule”.</p>
+        <p class="small">
+          1. Define items, members, constraints on the right. 2. Click “Optimize
+          schedule”.
+        </p>
 
-        <div class="row" style="margin-top:6px;">
-            <div class="field">
-                <label>Temperature</label>
-                <input type="number" id="temperature" value="1000" step="100">
-            </div>
-            <div class="field">
-                <label>Cooling rate</label>
-                <input type="number" id="coolingRate" value="0.99" step="0.01">
-            </div>
-            <div class="field">
-                <label>Max iterations</label>
-                <input type="number" id="maxIterations" value="5000" step="100">
-            </div>
+        <div class="row" style="margin-top: 6px">
+          <div class="field">
+            <label>Temperature</label>
+            <input type="number" id="temperature" value="1000" step="100" />
+          </div>
+          <div class="field">
+            <label>Cooling rate</label>
+            <input type="number" id="coolingRate" value="0.99" step="0.01" />
+          </div>
+          <div class="field">
+            <label>Max iterations</label>
+            <input type="number" id="maxIterations" value="5000" step="100" />
+          </div>
         </div>
 
         <div class="status-log" id="statusLog">
-            <p>> Loading data from server…</p>
+          <p>> Loading data from server…</p>
         </div>
 
         <div class="timetable-wrapper" id="timetableWrapper">
-            <!-- Timetable goes here -->
+          <!-- Timetable goes here -->
         </div>
-    </div>
+      </div>
 
-    <!-- RIGHT: Items / Members / Constraints -->
-    <div class="card scroll">
+      <!-- RIGHT: Items / Members / Constraints -->
+      <div class="card scroll">
         <!-- ITEMS -->
         <div>
-            <h2> Items</h2>
-            <p class="small">Define entity types (Course, Room, TimeSlot, …).</p>
+          <h2>Items</h2>
+          <p class="small">Define item types (Course, Room, TimeSlot, …).</p>
 
-            <div class="section-title">Add item</div>
-            <div class="row">
-                <div class="field">
-                    <label>Name</label>
-                    <input type="text" id="itemName" placeholder="Room">
-                </div>
-                <div class="field">
-                    <label>Type</label>
-                    <select id="itemType">
-                        <option value="B_Set">B_Set (tasks)</option>
-                        <option value="E_Set" selected>E_Set (resources)</option>
-                    </select>
-                </div>
+          <div
+            class="section-title"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            "
+          >
+            <span>Add item</span>
+            <button
+              class="btn btn-secondary btn-small"
+              type="button"
+              onclick="resetItemForm()"
+            >
+              New
+            </button>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Name</label>
+              <input type="text" id="itemName" placeholder="Room" />
             </div>
+            <div class="field">
+              <label>Type</label>
+              <select id="itemType">
+                <option value="B_Set">B_Set (tasks)</option>
+                <option value="E_Set" selected>E_Set (resources)</option>
+              </select>
+            </div>
+          </div>
 
-            <div class="section-title">Fields</div>
-            <div id="itemFieldsContainer"></div>
-            <button class="btn btn-secondary btn-small" onclick="addItemFieldRow()">+ Add field</button>
-            <button class="btn btn-primary btn-small" style="margin-left:4px;" onclick="createItem()">Save item type</button>
+          <div class="section-title">Fields</div>
+          <div id="itemFieldsContainer"></div>
+          <button
+            class="btn btn-secondary btn-small"
+            type="button"
+            onclick="addItemFieldRow()"
+          >
+            + Add field
+          </button>
+          <button
+            class="btn btn-primary btn-small"
+            type="button"
+            style="margin-left: 4px"
+            onclick="createItem()"
+          >
+            Save item type
+          </button>
 
-            <div class="section-title">Existing items</div>
-            <div id="itemsList"></div>
+          <div class="section-title">Existing items</div>
+          <div id="itemsList"></div>
         </div>
 
         <!-- MEMBERS -->
-        <div style="margin-top:10px;">
-            <h2> Members</h2>
-            <p class="small">Add concrete entries (e.g. Room B11, TimeSlot Monday 08:00–09:30).</p>
+        <div style="margin-top: 10px">
+          <h2>Members</h2>
+          <p class="small">
+            Add concrete entries (e.g. Room B11, TimeSlot Monday 08:00–09:30).
+          </p>
 
-            <div class="row">
-                <div class="field">
-                    <label>Item category</label>
-                    <select id="memberItemSelect" onchange="onMemberItemChange()">
-                        <option value="">Select…</option>
-                    </select>
-                </div>
+          <div class="row">
+            <div class="field">
+              <label>Item category</label>
+              <select id="memberItemSelect" onchange="onMemberItemChange()">
+                <option value="">Select…</option>
+              </select>
             </div>
+          </div>
 
-            <div id="memberForm"></div>
-            <div id="membersList"></div>
+          <div id="memberForm"></div>
+          <div id="membersList"></div>
         </div>
 
         <!-- CONSTRAINTS -->
-        <div style="margin-top:10px;">
-            <h2> Constraints</h2>
-            <p class="small">Define rules like “each time slot has a unique room”.</p>
+        <div style="margin-top: 10px">
+          <h2>Constraints</h2>
+          <p class="small">
+            Define rules like “each time slot has a unique room”.
+          </p>
 
-            <!-- Constraint builder -->
-            <div class="section-title">New constraint</div>
+          <!-- Constraint builder -->
+          <div
+            class="section-title"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            "
+          >
+            <span>New / edit constraint</span>
+            <button
+              class="btn btn-secondary btn-small"
+              type="button"
+              onclick="resetConstraintForm()"
+            >
+              New
+            </button>
+          </div>
+
+          <div class="field">
+            <label>Name</label>
+            <input
+              type="text"
+              id="constraintName"
+              placeholder="No Room Conflicts"
+            />
+          </div>
+          <div class="row">
             <div class="field">
-                <label>Name</label>
-                <input type="text" id="constraintName" placeholder="No Room Conflicts">
+              <label>Weight</label>
+              <input type="number" id="constraintWeight" value="100" />
+            </div>
+            <div class="field">
+              <label>Rule type</label>
+              <select id="constraintType" onchange="onConstraintTypeChange()">
+                <option value="">Select…</option>
+                <option value="GlobalAllDifferent">
+                  UNIQUE (no conflicts)
+                </option>
+                <option value="MultiAssignmentCheck">
+                  Per-assignment check
+                </option>
+                <option value="GlobalCardinality">
+                  Limit count (cardinality)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- UNIQUE (GlobalAllDifferent) -->
+          <div id="uniqueBuilder" style="display: none; margin-top: 6px">
+            <div class="small" style="margin-bottom: 4px">
+              UNIQUE: “For each group, this field must not repeat”.
             </div>
             <div class="row">
-                <div class="field">
-                    <label>Weight</label>
-                    <input type="number" id="constraintWeight" value="100">
-                </div>
+              <div class="field">
+                <label>What must be unique? (Item)</label>
+                <select id="uniqueItemSelect" onchange="updateUniqueFields()">
+                  <option value="">Select item…</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Field</label>
+                <select id="uniqueFieldSelect">
+                  <option value="id">id</option>
+                </select>
+              </div>
             </div>
-
-            <div class="field" style="margin-top:4px;">
-                <label>Type keyword (start typing “UNI”)</label>
-                <input type="text" id="constraintKeyword" oninput="onConstraintKeywordInput()" placeholder="UNI …">
+            <div class="row">
+              <div class="field">
+                <label>Grouped by (Item)</label>
+                <select id="groupItemSelect" onchange="updateGroupFields()">
+                  <option value="">Select item…</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Field</label>
+                <select id="groupFieldSelect">
+                  <option value="id">id</option>
+                </select>
+              </div>
             </div>
-            <div class="keyword-suggestions" id="keywordSuggestions"></div>
+          </div>
 
-            <!-- UNIQUE builder -->
-            <div id="uniqueBuilder" style="display:none; margin-top:6px;">
-                <div class="small" style="margin-bottom:4px;">
-                    UNIQUE: “For each group, this field must not repeat”.
-                </div>
-                <div class="row">
-                    <div class="field">
-                        <label>What must be unique? (Item)</label>
-                        <select id="uniqueItemSelect" onchange="updateUniqueFields()">
-                            <option value="">Select item…</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Field</label>
-                        <select id="uniqueFieldSelect">
-                            <option value="id">id</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="field">
-                        <label>Grouped by (Item)</label>
-                        <select id="groupItemSelect" onchange="updateGroupFields()">
-                            <option value="">Select item…</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Field</label>
-                        <select id="groupFieldSelect">
-                            <option value="id">id</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-small" style="margin-top:4px;" onclick="createUniqueConstraint()">
-                    Save UNIQUE constraint
-                </button>
+          <!-- MultiAssignmentCheck -->
+          <div id="multiBuilder" style="display: none; margin-top: 6px">
+            <div class="small" style="margin-bottom: 4px">
+              Per-assignment rule: combine conditions with AND/OR, then forbid
+              or require them.
             </div>
+            <div class="row">
+              <div class="field">
+                <label>Mode</label>
+                <select id="multiMode">
+                  <option value="Forbid">
+                    Forbid (penalize when conditions are true)
+                  </option>
+                  <option value="Require">
+                    Require (penalize when conditions are false)
+                  </option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Combine conditions</label>
+                <select id="multiLogicalOp">
+                  <option value="And">ALL must match (AND)</option>
+                  <option value="Or">ANY may match (OR)</option>
+                </select>
+              </div>
+            </div>
+            <div class="section-title">Conditions</div>
+            <div id="multiConditionsContainer"></div>
+            <button
+              class="btn btn-secondary btn-small"
+              type="button"
+              onclick="addConditionRow('multiConditionsContainer')"
+            >
+              + Add condition
+            </button>
+          </div>
 
-            <div class="section-title" style="margin-top:6px;">Existing constraints</div>
-            <div id="constraintsList"></div>
+          <!-- GlobalCardinality -->
+          <div id="cardBuilder" style="display: none; margin-top: 6px">
+            <div class="small" style="margin-bottom: 4px">
+              Limit how often a value appears (e.g. “each lecturer teaches at
+              most 2 courses”).
+            </div>
+            <div class="row">
+              <div class="field">
+                <label>Target item</label>
+                <select id="cardTargetItem" onchange="updateCardTargetFields()">
+                  <option value="">Select item…</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Field</label>
+                <select id="cardTargetField">
+                  <option value="id">id</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Max count</label>
+                <input type="number" id="cardMaxCount" value="1" />
+              </div>
+            </div>
+            <div class="section-title">Scope (optional filter)</div>
+            <div id="cardScopeContainer"></div>
+            <button
+              class="btn btn-secondary btn-small"
+              type="button"
+              onclick="addConditionRow('cardScopeContainer')"
+            >
+              + Add scope condition
+            </button>
+          </div>
+
+          <button
+            class="btn btn-primary btn-small"
+            style="margin-top: 6px"
+            type="button"
+            onclick="saveConstraint()"
+          >
+            Save constraint
+          </button>
+
+          <div class="section-title" style="margin-top: 6px">
+            Existing constraints
+          </div>
+          <div id="constraintsList"></div>
+
+          <div class="section-title" style="margin-top: 6px">
+            Selected constraint (raw JSON)
+          </div>
+          <pre
+            id="constraintRaw"
+            class="small"
+            style="
+              background: #f8f8f8;
+              padding: 6px;
+              border-radius: 4px;
+              max-height: 120px;
+              overflow: auto;
+            "
+          ></pre>
         </div>
+      </div>
     </div>
-</div>
 
-<script>
-    const API = window.location.origin;
+    <script>
+      const API = "https://dynamic-timetable-scheduler.onrender.com";
 
-    const itemsMeta = {}; // name -> { item_set_type, fields, members }
+      const itemsMeta = {}; // name -> { item_set_type, fields, members }
+      function resetItemForm() {
+        editingItemName = null;
 
-    const predefinedSchemas = {
-        "Course":   { name: "Text", duration: "Integer" },
-        "Room":     { name: "Text", capacity: "Integer" },
-        "TimeSlot": { day: "Text", start: "DateTime", end: "DateTime" },
-        "Lecturer": { name: "Text" }
-    };
+        const nameInput = document.getElementById("itemName");
+        const typeSelect = document.getElementById("itemType");
+        const container = document.getElementById("itemFieldsContainer");
 
-    const coursesById   = {};
-    const roomsById     = {};
-    const timesById     = {};
-    const lecturersById = {};
+        if (!nameInput || !typeSelect || !container) return;
 
-    let constraintsCache = [];
+        nameInput.value = "";
+        nameInput.disabled = false;
+        typeSelect.value = "E_Set";
 
-    let editingItemName = null;
-    let editingMemberItem = null;
-    let editingMemberId = null;
-    let editingConstraintOriginalName = null;
+        container.innerHTML = "";
+        addItemFieldRow("name", "Text");
+        addItemFieldRow("capacity", "Integer");
+      }
 
-    async function preloadExample() {
-    log("Loading example data…");
+      const predefinedSchemas = {
+        Course: { name: "Text", duration: "Integer" },
+        Room: { name: "Text", capacity: "Integer" },
+        TimeSlot: { day: "Text", start: "DateTime", end: "DateTime" },
+        Lecturer: { name: "Text" },
+      };
 
-    const post = async (path, body) => {
-        try {
+      const coursesById = {};
+      const roomsById = {};
+      const timesById = {};
+      const lecturersById = {};
+
+      let constraintsCache = [];
+
+      let editingItemName = null;
+      let editingMemberItem = null;
+      let editingMemberId = null;
+      let editingConstraintOriginalName = null;
+
+      async function preloadExample() {
+        log("Loading example data…");
+
+        const post = async (path, body) => {
+          try {
             const res = await fetch(`${API}${path}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
             });
             if (!res.ok) {
-                console.log("POST failed", path, await res.text());
+              console.log("POST failed", path, await res.text());
             }
-        } catch (e) {
+          } catch (e) {
             console.log("POST error", path, e);
-        }
-    };
+          }
+        };
 
-    // ITEMS
-    await post("/items", {
-        name: "Course",
-        item_set_type: "B_Set",
-        schema: {
+        // ITEMS
+        await post("/items", {
+          name: "Course",
+          item_set_type: "B_Set",
+          schema: {
             definitions: {
-                name: { field_name: "name", field_type: "Text", is_required: true },
-                duration: { field_name: "duration", field_type: "Integer", is_required: true },
+              name: {
+                field_name: "name",
+                field_type: "Text",
+                is_required: true,
+              },
+              duration: {
+                field_name: "duration",
+                field_type: "Integer",
+                is_required: true,
+              },
             },
-        },
-    });
+          },
+        });
 
-    await post("/items", {
-        name: "Room",
-        item_set_type: "E_Set",
-        schema: {
+        await post("/items", {
+          name: "Room",
+          item_set_type: "E_Set",
+          schema: {
             definitions: {
-                name: { field_name: "name", field_type: "Text", is_required: true },
-                capacity: { field_name: "capacity", field_type: "Integer", is_required: true },
+              name: {
+                field_name: "name",
+                field_type: "Text",
+                is_required: true,
+              },
+              capacity: {
+                field_name: "capacity",
+                field_type: "Integer",
+                is_required: true,
+              },
             },
-        },
-    });
+          },
+        });
 
-    await post("/items", {
-        name: "TimeSlot",
-        item_set_type: "E_Set",
-        schema: {
+        await post("/items", {
+          name: "TimeSlot",
+          item_set_type: "E_Set",
+          schema: {
             definitions: {
-                day: { field_name: "day", field_type: "Text", is_required: true },
-                start: { field_name: "start", field_type: "DateTime", is_required: true },
-                end: { field_name: "end", field_type: "DateTime", is_required: true },
+              day: { field_name: "day", field_type: "Text", is_required: true },
+              start: {
+                field_name: "start",
+                field_type: "DateTime",
+                is_required: true,
+              },
+              end: {
+                field_name: "end",
+                field_type: "DateTime",
+                is_required: true,
+              },
             },
-        },
-    });
+          },
+        });
 
-    await post("/items", {
-        name: "Lecturer",
-        item_set_type: "E_Set",
-        schema: {
+        await post("/items", {
+          name: "Lecturer",
+          item_set_type: "E_Set",
+          schema: {
             definitions: {
-                name: { field_name: "name", field_type: "Text", is_required: true },
+              name: {
+                field_name: "name",
+                field_type: "Text",
+                is_required: true,
+              },
             },
-        },
-    });
+          },
+        });
 
-    // MEMBERS: Course
-    await post("/items/Course/members", { id: 1, fields: { name: { String: "Photogrammetric Computer Vision (L)" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 2, fields: { name: { String: "Photogrammetric Computer Vision (E)" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 3, fields: { name: { String: "HCI Theory & Methods" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 4, fields: { name: { String: "Security Engineering" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 5, fields: { name: { String: "Deep Learning for Computer Vision" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 6, fields: { name: { String: "Formal Methods for Software Engineering" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 7, fields: { name: { String: "Online Computation" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 8, fields: { name: { String: "Methods of Social Data Analysis" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 9, fields: { name: { String: "Academic English" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 10, fields: { name: { String: "Spatial Information Systems / GIS" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 11, fields: { name: { String: "Introduction to Machine Learning" }, duration: { Number: 90 } } });
-    await post("/items/Course/members", { id: 12, fields: { name: { String: "Virtual Reality" }, duration: { Number: 90 } } });
+        // MEMBERS: Course
+        await post("/items/Course/members", {
+          id: 1,
+          fields: {
+            name: { String: "Photogrammetric Computer Vision (L)" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 2,
+          fields: {
+            name: { String: "Photogrammetric Computer Vision (E)" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 3,
+          fields: {
+            name: { String: "HCI Theory & Methods" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 4,
+          fields: {
+            name: { String: "Security Engineering" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 5,
+          fields: {
+            name: { String: "Deep Learning for Computer Vision" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 6,
+          fields: {
+            name: { String: "Formal Methods for Software Engineering" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 7,
+          fields: {
+            name: { String: "Online Computation" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 8,
+          fields: {
+            name: { String: "Methods of Social Data Analysis" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 9,
+          fields: {
+            name: { String: "Academic English" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 10,
+          fields: {
+            name: { String: "Spatial Information Systems / GIS" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 11,
+          fields: {
+            name: { String: "Introduction to Machine Learning" },
+            duration: { Number: 90 },
+          },
+        });
+        await post("/items/Course/members", {
+          id: 12,
+          fields: {
+            name: { String: "Virtual Reality" },
+            duration: { Number: 90 },
+          },
+        });
 
-    // MEMBERS: Room
-    await post("/items/Room/members", { id: 1, fields: { name: { String: "B11" }, capacity: { Number: 50 } } });
-    await post("/items/Room/members", { id: 2, fields: { name: { String: "SR_A" }, capacity: { Number: 30 } } });
-    await post("/items/Room/members", { id: 3, fields: { name: { String: "SR_H" }, capacity: { Number: 25 } } });
-    await post("/items/Room/members", { id: 4, fields: { name: { String: "LH_HK7" }, capacity: { Number: 100 } } });
+        // MEMBERS: Room
+        await post("/items/Room/members", {
+          id: 1,
+          fields: { name: { String: "B11" }, capacity: { Number: 50 } },
+        });
+        await post("/items/Room/members", {
+          id: 2,
+          fields: { name: { String: "SR_A" }, capacity: { Number: 30 } },
+        });
+        await post("/items/Room/members", {
+          id: 3,
+          fields: { name: { String: "SR_H" }, capacity: { Number: 25 } },
+        });
+        await post("/items/Room/members", {
+          id: 4,
+          fields: { name: { String: "LH_HK7" }, capacity: { Number: 100 } },
+        });
 
-    // MEMBERS: TimeSlot
-    await post("/items/TimeSlot/members", { id: 1, fields: { day: { String: "Monday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
-    await post("/items/TimeSlot/members", { id: 2, fields: { day: { String: "Monday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
-    await post("/items/TimeSlot/members", { id: 3, fields: { day: { String: "Monday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
-    await post("/items/TimeSlot/members", { id: 4, fields: { day: { String: "Monday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
-    await post("/items/TimeSlot/members", { id: 5, fields: { day: { String: "Monday" }, start: { Date: "17:00" }, end: { Date: "18:30" } } });
-    await post("/items/TimeSlot/members", { id: 6, fields: { day: { String: "Tuesday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
-    await post("/items/TimeSlot/members", { id: 7, fields: { day: { String: "Tuesday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
-    await post("/items/TimeSlot/members", { id: 8, fields: { day: { String: "Tuesday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
-    await post("/items/TimeSlot/members", { id: 9, fields: { day: { String: "Tuesday" }, start: { Date: "17:00" }, end: { Date: "18:30" } } });
-    await post("/items/TimeSlot/members", { id: 10, fields: { day: { String: "Wednesday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
-    await post("/items/TimeSlot/members", { id: 11, fields: { day: { String: "Wednesday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
-    await post("/items/TimeSlot/members", { id: 12, fields: { day: { String: "Wednesday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
-    await post("/items/TimeSlot/members", { id: 13, fields: { day: { String: "Wednesday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
-    await post("/items/TimeSlot/members", { id: 14, fields: { day: { String: "Thursday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
-    await post("/items/TimeSlot/members", { id: 15, fields: { day: { String: "Thursday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
-    await post("/items/TimeSlot/members", { id: 16, fields: { day: { String: "Thursday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
-    await post("/items/TimeSlot/members", { id: 17, fields: { day: { String: "Thursday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
-    await post("/items/TimeSlot/members", { id: 18, fields: { day: { String: "Friday" }, start: { Date: "09:15" }, end: { Date: "10:45" } } });
-    await post("/items/TimeSlot/members", { id: 19, fields: { day: { String: "Friday" }, start: { Date: "11:00" }, end: { Date: "12:30" } } });
-    await post("/items/TimeSlot/members", { id: 20, fields: { day: { String: "Friday" }, start: { Date: "13:30" }, end: { Date: "15:00" } } });
-    await post("/items/TimeSlot/members", { id: 21, fields: { day: { String: "Friday" }, start: { Date: "15:15" }, end: { Date: "16:45" } } });
+        // MEMBERS: TimeSlot
+        await post("/items/TimeSlot/members", {
+          id: 1,
+          fields: {
+            day: { String: "Monday" },
+            start: { Date: "09:15" },
+            end: { Date: "10:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 2,
+          fields: {
+            day: { String: "Monday" },
+            start: { Date: "11:00" },
+            end: { Date: "12:30" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 3,
+          fields: {
+            day: { String: "Monday" },
+            start: { Date: "13:30" },
+            end: { Date: "15:00" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 4,
+          fields: {
+            day: { String: "Monday" },
+            start: { Date: "15:15" },
+            end: { Date: "16:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 5,
+          fields: {
+            day: { String: "Monday" },
+            start: { Date: "17:00" },
+            end: { Date: "18:30" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 6,
+          fields: {
+            day: { String: "Tuesday" },
+            start: { Date: "09:15" },
+            end: { Date: "10:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 7,
+          fields: {
+            day: { String: "Tuesday" },
+            start: { Date: "11:00" },
+            end: { Date: "12:30" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 8,
+          fields: {
+            day: { String: "Tuesday" },
+            start: { Date: "13:30" },
+            end: { Date: "15:00" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 9,
+          fields: {
+            day: { String: "Tuesday" },
+            start: { Date: "17:00" },
+            end: { Date: "18:30" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 10,
+          fields: {
+            day: { String: "Wednesday" },
+            start: { Date: "09:15" },
+            end: { Date: "10:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 11,
+          fields: {
+            day: { String: "Wednesday" },
+            start: { Date: "11:00" },
+            end: { Date: "12:30" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 12,
+          fields: {
+            day: { String: "Wednesday" },
+            start: { Date: "13:30" },
+            end: { Date: "15:00" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 13,
+          fields: {
+            day: { String: "Wednesday" },
+            start: { Date: "15:15" },
+            end: { Date: "16:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 14,
+          fields: {
+            day: { String: "Thursday" },
+            start: { Date: "09:15" },
+            end: { Date: "10:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 15,
+          fields: {
+            day: { String: "Thursday" },
+            start: { Date: "11:00" },
+            end: { Date: "12:30" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 16,
+          fields: {
+            day: { String: "Thursday" },
+            start: { Date: "13:30" },
+            end: { Date: "15:00" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 17,
+          fields: {
+            day: { String: "Thursday" },
+            start: { Date: "15:15" },
+            end: { Date: "16:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 18,
+          fields: {
+            day: { String: "Friday" },
+            start: { Date: "09:15" },
+            end: { Date: "10:45" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 19,
+          fields: {
+            day: { String: "Friday" },
+            start: { Date: "11:00" },
+            end: { Date: "12:30" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 20,
+          fields: {
+            day: { String: "Friday" },
+            start: { Date: "13:30" },
+            end: { Date: "15:00" },
+          },
+        });
+        await post("/items/TimeSlot/members", {
+          id: 21,
+          fields: {
+            day: { String: "Friday" },
+            start: { Date: "15:15" },
+            end: { Date: "16:45" },
+          },
+        });
 
-    // MEMBERS: Lecturer
-    await post("/items/Lecturer/members", { id: 1, fields: { name: { String: "Prof. Rodehorst" } } });
-    await post("/items/Lecturer/members", { id: 2, fields: { name: { String: "Prof. Ringert" } } });
-    await post("/items/Lecturer/members", { id: 3, fields: { name: { String: "PD Dr. Jakoby / R. Adejoh" } } });
-    await post("/items/Lecturer/members", { id: 4, fields: { name: { String: "Prof. Jakesch" } } });
-    await post("/items/Lecturer/members", { id: 5, fields: { name: { String: "Prof. Stein" } } });
-    await post("/items/Lecturer/members", { id: 6, fields: { name: { String: "Prof. Fröhlich" } } });
-    await post("/items/Lecturer/members", { id: 7, fields: { name: { String: "Prof. Hornecker" } } });
-    await post("/items/Lecturer/members", { id: 8, fields: { name: { String: "Prof. Lucks" } } });
-    await post("/items/Lecturer/members", { id: 9, fields: { name: { String: "J. Eick / A. Frolov / D. Tschirschwitz" } } });
-    await post("/items/Lecturer/members", { id: 10, fields: { name: { String: "Dr. Atkinson" } } });
-    await post("/items/Lecturer/members", { id: 11, fields: { name: { String: "J. Leuther" } } });
-    await post("/items/Lecturer/members", { id: 12, fields: { name: { String: "T. Gebhardt" } } });
+        // MEMBERS: Lecturer
+        await post("/items/Lecturer/members", {
+          id: 1,
+          fields: { name: { String: "Prof. Rodehorst" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 2,
+          fields: { name: { String: "Prof. Ringert" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 3,
+          fields: { name: { String: "PD Dr. Jakoby / R. Adejoh" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 4,
+          fields: { name: { String: "Prof. Jakesch" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 5,
+          fields: { name: { String: "Prof. Stein" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 6,
+          fields: { name: { String: "Prof. Fröhlich" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 7,
+          fields: { name: { String: "Prof. Hornecker" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 8,
+          fields: { name: { String: "Prof. Lucks" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 9,
+          fields: {
+            name: { String: "J. Eick / A. Frolov / D. Tschirschwitz" },
+          },
+        });
+        await post("/items/Lecturer/members", {
+          id: 10,
+          fields: { name: { String: "Dr. Atkinson" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 11,
+          fields: { name: { String: "J. Leuther" } },
+        });
+        await post("/items/Lecturer/members", {
+          id: 12,
+          fields: { name: { String: "T. Gebhardt" } },
+        });
 
-    // CONSTRAINTS
-    await post("/constraints", {
-        constraint: {
+        // CONSTRAINTS
+        await post("/constraints", {
+          constraint: {
             name: "No Room Conflicts",
             weight: 100,
             rule: {
-                GlobalAllDifferent: {
-                    unique_item_field: "Room:id",
-                    group_item_field: "TimeSlot:id",
-                },
+              GlobalAllDifferent: {
+                unique_item_field: "Room:id",
+                group_item_field: "TimeSlot:id",
+              },
             },
-        },
-    });
+          },
+        });
 
-    await post("/constraints", {
-        constraint: {
+        await post("/constraints", {
+          constraint: {
             name: "No Lecturer Conflicts",
             weight: 100,
             rule: {
-                GlobalAllDifferent: {
-                    unique_item_field: "Lecturer:id",
-                    group_item_field: "TimeSlot:id",
-                },
+              GlobalAllDifferent: {
+                unique_item_field: "Lecturer:id",
+                group_item_field: "TimeSlot:id",
+              },
             },
-        },
-    });
+          },
+        });
 
-    await post("/constraints", {
-        constraint: {
+        await post("/constraints", {
+          constraint: {
             name: "No Friday Afternoon",
             weight: 10,
             rule: {
-                MultiAssignmentCheck: {
-                    conditions: [
-                        {
-                            item_name: "TimeSlot",
-                            field_key: "day",
-                            operator: "Equal",
-                            target_values: ["Friday"],
-                        },
-                        {
-                            item_name: "TimeSlot",
-                            field_key: "start",
-                            operator: "GreaterThanOrEqual",
-                            target_values: ["15:00"],
-                        },
-                    ],
-                    logical_op: "And",
-                    mode: "Forbid",
-                },
+              MultiAssignmentCheck: {
+                conditions: [
+                  {
+                    item_name: "TimeSlot",
+                    field_key: "day",
+                    operator: "Equal",
+                    target_values: ["Friday"],
+                  },
+                  {
+                    item_name: "TimeSlot",
+                    field_key: "start",
+                    operator: "GreaterThanOrEqual",
+                    target_values: ["15:00"],
+                  },
+                ],
+                logical_op: "And",
+                mode: "Forbid",
+              },
             },
-        },
-    });
+          },
+        });
 
-    log("Example data loaded.");
-    await loadItemsAndMembers();
-    await loadConstraints();
-}
+        log("Example data loaded.");
+        await loadItemsAndMembers();
+        await loadConstraints();
+      }
 
-
-    function log(msg) {
+      function log(msg) {
         const logEl = document.getElementById("statusLog");
         logEl.innerHTML += `<p>> ${msg}</p>`;
         logEl.scrollTop = logEl.scrollHeight;
-    }
+      }
 
-    function valueToString(v) {
+      function valueToString(v) {
         if (v == null) return "";
         if (typeof v === "string" || typeof v === "number") return String(v);
         if (typeof v === "object") {
-            if ("String" in v) return v.String;
-            if ("Number" in v) return String(v.Number);
-            if ("Date" in v) return v.Date;
+          if ("String" in v) return v.String;
+          if ("Number" in v) return String(v.Number);
+          if ("Date" in v) return v.Date;
         }
         return "";
-    }
+      }
 
-    // ---------- ITEMS ----------
+      // ---------- ITEMS ----------
 
-    function addItemFieldRow(name = "", type = "Text") {
+      function addItemFieldRow(name = "", type = "Text") {
         const container = document.getElementById("itemFieldsContainer");
         const row = document.createElement("div");
         row.className = "row";
@@ -603,59 +1091,67 @@
             <div class="field">
                 <label>Type</label>
                 <select>
-                    <option value="Text" ${type==="Text"?"selected":""}>Text</option>
-                    <option value="Integer" ${type==="Integer"?"selected":""}>Integer</option>
-                    <option value="DateTime" ${type==="DateTime"?"selected":""}>Date/Time</option>
+                    <option value="Text" ${
+                      type === "Text" ? "selected" : ""
+                    }>Text</option>
+                    <option value="Integer" ${
+                      type === "Integer" ? "selected" : ""
+                    }>Integer</option>
+                    <option value="DateTime" ${
+                      type === "DateTime" ? "selected" : ""
+                    }>Date/Time</option>
                 </select>
             </div>
             <button class="btn btn-small" onclick="this.parentElement.remove()">✕</button>
         `;
         container.appendChild(row);
-    }
+      }
 
-    async function createItem() {
+      async function createItem() {
         const nameInput = document.getElementById("itemName");
         const name = nameInput.value.trim();
         const type = document.getElementById("itemType").value;
         if (!name) return;
 
-        const rows = Array.from(document.getElementById("itemFieldsContainer").children);
+        const rows = Array.from(
+          document.getElementById("itemFieldsContainer").children
+        );
         const definitions = {};
-        rows.forEach(row => {
-            const inputs = row.querySelectorAll("input,select");
-            const fieldName = inputs[0].value.trim();
-            const fieldType = inputs[1].value;
-            if (!fieldName) return;
-            definitions[fieldName] = {
-                field_name: fieldName,
-                field_type: fieldType,
-                is_required: true,
-            };
+        rows.forEach((row) => {
+          const inputs = row.querySelectorAll("input,select");
+          const fieldName = inputs[0].value.trim();
+          const fieldType = inputs[1].value;
+          if (!fieldName) return;
+          definitions[fieldName] = {
+            field_name: fieldName,
+            field_type: fieldType,
+            is_required: true,
+          };
         });
 
         if (editingItemName && editingItemName === name) {
-            // UPDATE
-            await fetch(`${API}/items/${encodeURIComponent(name)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    item_set_type: type,
-                    schema: { definitions },
-                }),
-            });
-            log(`Item type updated: ${name}`);
+          // UPDATE
+          await fetch(`${API}/items/${encodeURIComponent(name)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              item_set_type: type,
+              schema: { definitions },
+            }),
+          });
+          log(`Item type updated: ${name}`);
         } else {
-            // CREATE
-            await fetch(`${API}/items`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name,
-                    item_set_type: type,
-                    schema: { definitions },
-                }),
-            });
-            log(`Item type created: ${name}`);
+          // CREATE
+          await fetch(`${API}/items`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              item_set_type: type,
+              schema: { definitions },
+            }),
+          });
+          log(`Item type created: ${name}`);
         }
 
         editingItemName = null;
@@ -663,10 +1159,11 @@
         nameInput.value = "";
         document.getElementById("itemFieldsContainer").innerHTML = "";
 
+        resetItemForm();
         await loadItemsAndMembers();
-    }
+      }
 
-    function startEditItem(name) {
+      function startEditItem(name) {
         const meta = itemsMeta[name];
         if (!meta) return;
 
@@ -684,57 +1181,63 @@
         const fields = meta.fields || {};
         const keys = Object.keys(fields);
         if (keys.length === 0) {
-            addItemFieldRow();
+          addItemFieldRow();
         } else {
-            keys.forEach(k => addItemFieldRow(k, fields[k]));
+          keys.forEach((k) => addItemFieldRow(k, fields[k]));
         }
-    }
+      }
 
-    async function deleteItem(name) {
+      async function deleteItem(name) {
         if (!confirm(`Delete item type "${name}" and ALL its members?`)) return;
 
         await fetch(`${API}/items/${encodeURIComponent(name)}`, {
-            method: "DELETE",
+          method: "DELETE",
         });
 
         log(`Item type deleted: ${name}`);
         await loadItemsAndMembers();
-    }
+      }
 
-    function renderItemsList() {
+      function renderItemsList() {
         const listEl = document.getElementById("itemsList");
         const memberSelect = document.getElementById("memberItemSelect");
         const uniqueItemSelect = document.getElementById("uniqueItemSelect");
         const groupItemSelect = document.getElementById("groupItemSelect");
+        const cardTargetItem = document.getElementById("cardTargetItem");
 
         listEl.innerHTML = "";
         memberSelect.innerHTML = `<option value="">Select…</option>`;
         uniqueItemSelect.innerHTML = `<option value="">Select item…</option>`;
         groupItemSelect.innerHTML = `<option value="">Select item…</option>`;
+        if (cardTargetItem)
+          cardTargetItem.innerHTML = `<option value="">Select item…</option>`;
 
-        Object.keys(itemsMeta).forEach(name => {
-            const meta = itemsMeta[name];
+        Object.keys(itemsMeta).forEach((name) => {
+          const meta = itemsMeta[name];
 
-            listEl.innerHTML += `
-                <div class="list-item">
-                    <strong>${name}</strong>
-                    <span class="small">&nbsp;(${meta.item_set_type}, ${meta.members.length} members)</span>
-                    <div style="margin-top:2px;">
-                        <button class="btn btn-small" onclick="startEditItem('${name}')">Edit</button>
-                        <button class="btn btn-small" onclick="deleteItem('${name}')">Delete</button>
-                    </div>
+          listEl.innerHTML += `
+            <div class="list-item">
+                <strong>${name}</strong>
+                <span class="small">&nbsp;(${meta.item_set_type}, ${meta.members.length} members)</span>
+                <div style="margin-top:2px;">
+                    <button class="btn btn-small" onclick="startEditItem('${name}')">Edit</button>
+                    <button class="btn btn-small" onclick="deleteItem('${name}')">Delete</button>
                 </div>
-            `;
+            </div>
+        `;
 
-            memberSelect.innerHTML += `<option value="${name}">${name}</option>`;
-            uniqueItemSelect.innerHTML += `<option value="${name}">${name}</option>`;
-            groupItemSelect.innerHTML += `<option value="${name}">${name}</option>`;
+          memberSelect.innerHTML += `<option value="${name}">${name}</option>`;
+          uniqueItemSelect.innerHTML += `<option value="${name}">${name}</option>`;
+          groupItemSelect.innerHTML += `<option value="${name}">${name}</option>`;
+          if (cardTargetItem) {
+            cardTargetItem.innerHTML += `<option value="${name}">${name}</option>`;
+          }
         });
-    }
+      }
 
-    // ---------- MEMBERS ----------
+      // ---------- MEMBERS ----------
 
-    function onMemberItemChange() {
+      function onMemberItemChange() {
         const itemName = document.getElementById("memberItemSelect").value;
         const formEl = document.getElementById("memberForm");
         const listEl = document.getElementById("membersList");
@@ -749,13 +1252,15 @@
 
         let fields = meta.fields;
         if (!fields || Object.keys(fields).length === 0) {
-            if (meta.members.length > 0) {
-                const sample = meta.members[0].fields || {};
-                fields = {};
-                Object.keys(sample).forEach(k => { fields[k] = "Text"; });
-            } else {
-                fields = {};
-            }
+          if (meta.members.length > 0) {
+            const sample = meta.members[0].fields || {};
+            fields = {};
+            Object.keys(sample).forEach((k) => {
+              fields[k] = "Text";
+            });
+          } else {
+            fields = {};
+          }
         }
 
         const inputs = [];
@@ -766,8 +1271,8 @@
             </div>
         `);
 
-        Object.keys(fields).forEach(key => {
-            inputs.push(`
+        Object.keys(fields).forEach((key) => {
+          inputs.push(`
                 <div class="field">
                     <label>${key}</label>
                     <input type="text" data-field-name="${key}">
@@ -785,12 +1290,12 @@
             </button>
         `;
 
-        meta.members.forEach(m => {
-            const fieldsMap = m.fields || {};
-            const text = Object.entries(fieldsMap)
-                .map(([k,v]) => `${k}: ${valueToString(v)}`)
-                .join(", ");
-            listEl.innerHTML += `
+        meta.members.forEach((m) => {
+          const fieldsMap = m.fields || {};
+          const text = Object.entries(fieldsMap)
+            .map(([k, v]) => `${k}: ${valueToString(v)}`)
+            .join(", ");
+          listEl.innerHTML += `
                 <div class="list-item">
                     <strong>ID ${m.id}</strong> — ${text}
                     <div style="margin-top:2px;">
@@ -803,12 +1308,14 @@
 
         editingMemberItem = null;
         editingMemberId = null;
-    }
+      }
 
-    function startEditMember(itemName, id) {
+      function startEditMember(itemName, id) {
         const meta = itemsMeta[itemName];
         if (!meta) return;
-        const member = meta.members.find(m => m.id === id || m.id?.[0] === id);
+        const member = meta.members.find(
+          (m) => m.id === id || m.id?.[0] === id
+        );
         if (!member) return;
 
         const idInput = document.getElementById("memberIdInput");
@@ -816,31 +1323,36 @@
         idInput.disabled = true;
 
         const fieldsMap = member.fields || {};
-        const inputs = document.querySelectorAll("#memberForm input[data-field-name]");
-        inputs.forEach(inp => {
-            const key = inp.getAttribute("data-field-name");
-            const v = fieldsMap[key];
-            inp.value = valueToString(v);
+        const inputs = document.querySelectorAll(
+          "#memberForm input[data-field-name]"
+        );
+        inputs.forEach((inp) => {
+          const key = inp.getAttribute("data-field-name");
+          const v = fieldsMap[key];
+          inp.value = valueToString(v);
         });
 
         editingMemberItem = itemName;
         editingMemberId = id;
-    }
+      }
 
-    async function deleteMember(itemName, id) {
+      async function deleteMember(itemName, id) {
         if (!confirm(`Delete member ${id} from ${itemName}?`)) return;
 
-        await fetch(`${API}/items/${encodeURIComponent(itemName)}/members/${id}`, {
+        await fetch(
+          `${API}/items/${encodeURIComponent(itemName)}/members/${id}`,
+          {
             method: "DELETE",
-        });
+          }
+        );
 
         log(`Member deleted from ${itemName}: ID ${id}`);
         await loadItemsAndMembers();
         document.getElementById("memberItemSelect").value = itemName;
         onMemberItemChange();
-    }
+      }
 
-    async function createMember(itemName) {
+      async function createMember(itemName) {
         const meta = itemsMeta[itemName];
         if (!meta) return;
 
@@ -848,37 +1360,42 @@
         const id = parseInt(idInput.value, 10);
         if (isNaN(id)) return;
 
-        const fieldInputs = Array.from(document.querySelectorAll("#memberForm input[data-field-name]"));
+        const fieldInputs = Array.from(
+          document.querySelectorAll("#memberForm input[data-field-name]")
+        );
         const fields = {};
-        fieldInputs.forEach(input => {
-            const key = input.getAttribute("data-field-name");
-            const raw = input.value;
-            const type = (meta.fields && meta.fields[key]) || "Text";
+        fieldInputs.forEach((input) => {
+          const key = input.getAttribute("data-field-name");
+          const raw = input.value;
+          const type = (meta.fields && meta.fields[key]) || "Text";
 
-            if (type === "Integer") {
-                const n = parseInt(raw, 10);
-                fields[key] = { Number: isNaN(n) ? 0 : n };
-            } else if (type === "DateTime") {
-                fields[key] = { Date: raw };
-            } else {
-                fields[key] = { String: raw };
-            }
+          if (type === "Integer") {
+            const n = parseInt(raw, 10);
+            fields[key] = { Number: isNaN(n) ? 0 : n };
+          } else if (type === "DateTime") {
+            fields[key] = { Date: raw };
+          } else {
+            fields[key] = { String: raw };
+          }
         });
 
         if (editingMemberItem === itemName && editingMemberId === id) {
-            await fetch(`${API}/items/${encodeURIComponent(itemName)}/members/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, fields }),
-            });
-            log(`Member updated in ${itemName}: ID ${id}`);
+          await fetch(
+            `${API}/items/${encodeURIComponent(itemName)}/members/${id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, fields }),
+            }
+          );
+          log(`Member updated in ${itemName}: ID ${id}`);
         } else {
-            await fetch(`${API}/items/${encodeURIComponent(itemName)}/members`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, fields }),
-            });
-            log(`Member added to ${itemName}: ID ${id}`);
+          await fetch(`${API}/items/${encodeURIComponent(itemName)}/members`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, fields }),
+          });
+          log(`Member added to ${itemName}: ID ${id}`);
         }
 
         editingMemberItem = null;
@@ -889,12 +1406,198 @@
         await loadItemsAndMembers();
         document.getElementById("memberItemSelect").value = itemName;
         onMemberItemChange();
-    }
+      }
 
-    // ---------- CONSTRAINTS (UNIQUE) ----------
+      // ---------- CONSTRAINTS (UNIQUE) ----------
+      function onConstraintTypeChange() {
+        const type = document.getElementById("constraintType").value;
 
-    function onConstraintKeywordInput() {
-        const input = document.getElementById("constraintKeyword").value.trim().toUpperCase();
+        const unique = document.getElementById("uniqueBuilder");
+        const multi = document.getElementById("multiBuilder");
+        const card = document.getElementById("cardBuilder");
+
+        if (unique)
+          unique.style.display =
+            type === "GlobalAllDifferent" ? "block" : "none";
+        if (multi)
+          multi.style.display =
+            type === "MultiAssignmentCheck" ? "block" : "none";
+        if (card)
+          card.style.display = type === "GlobalCardinality" ? "block" : "none";
+      }
+
+      function resetConstraintForm() {
+        editingConstraintOriginalName = null;
+
+        const nameInput = document.getElementById("constraintName");
+        const weightInput = document.getElementById("constraintWeight");
+        const typeSelect = document.getElementById("constraintType");
+        const rawBox = document.getElementById("constraintRaw");
+
+        if (nameInput) nameInput.value = "";
+        if (weightInput) weightInput.value = 100;
+        if (typeSelect) typeSelect.value = "";
+        if (rawBox) rawBox.textContent = "";
+
+        const unique = document.getElementById("uniqueBuilder");
+        const multi = document.getElementById("multiBuilder");
+        const card = document.getElementById("cardBuilder");
+        if (unique) unique.style.display = "none";
+        if (multi) multi.style.display = "none";
+        if (card) card.style.display = "none";
+
+        const multiCont = document.getElementById("multiConditionsContainer");
+        const cardScope = document.getElementById("cardScopeContainer");
+        if (multiCont) multiCont.innerHTML = "";
+        if (cardScope) cardScope.innerHTML = "";
+      }
+
+      const COMPARISON_OPERATORS = [
+        "Equal",
+        "NotEqual",
+        "In",
+        "NotIn",
+        "GreaterThan",
+        "GreaterThanOrEqual",
+        "LessThan",
+        "LessThanOrEqual",
+        "Before",
+        "After",
+        "Overlap",
+        "NoOverlap",
+      ];
+
+      function addConditionRow(containerId, existing) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const row = document.createElement("div");
+        row.className = "row condition-row";
+
+        // Build DOM
+        row.innerHTML = `
+        <div class="field">
+            <label>Item</label>
+            <select class="cond-item"></select>
+        </div>
+        <div class="field">
+            <label>Field</label>
+            <select class="cond-field">
+                <option value="id">id</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Operator</label>
+            <select class="cond-op"></select>
+        </div>
+        <div class="field">
+            <label>Target value(s)</label>
+            <input type="text" class="cond-values" placeholder="e.g. Friday or 1,2,3">
+        </div>
+        <button class="btn btn-small" type="button">✕</button>
+    `;
+
+        container.appendChild(row);
+
+        const itemSelect = row.querySelector(".cond-item");
+        const fieldSelect = row.querySelector(".cond-field");
+        const opSelect = row.querySelector(".cond-op");
+        const valuesInput = row.querySelector(".cond-values");
+        const deleteBtn = row.querySelector("button");
+
+        // Populate items
+        itemSelect.innerHTML = `<option value="">Select…</option>`;
+        Object.keys(itemsMeta).forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          itemSelect.appendChild(opt);
+        });
+
+        // Populate operators
+        COMPARISON_OPERATORS.forEach((op) => {
+          const opt = document.createElement("option");
+          opt.value = op;
+          opt.textContent = op;
+          opSelect.appendChild(opt);
+        });
+
+        function refreshFields() {
+          const itemName = itemSelect.value;
+          const fields = getFieldsForItem(itemName);
+          fieldSelect.innerHTML = "";
+          fields.forEach((f) => {
+            const opt = document.createElement("option");
+            opt.value = f;
+            opt.textContent = f;
+            fieldSelect.appendChild(opt);
+          });
+        }
+
+        itemSelect.addEventListener("change", refreshFields);
+        deleteBtn.addEventListener("click", () => row.remove());
+
+        // If editing existing
+        if (existing) {
+          if (existing.item_name) itemSelect.value = existing.item_name;
+          refreshFields();
+          if (existing.field_key) fieldSelect.value = existing.field_key;
+          if (existing.operator) opSelect.value = existing.operator;
+          if (Array.isArray(existing.target_values)) {
+            valuesInput.value = existing.target_values.join(", ");
+          }
+        } else {
+          refreshFields();
+        }
+      }
+
+      function readConditions(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return [];
+
+        const rows = Array.from(container.querySelectorAll(".condition-row"));
+        const result = [];
+
+        rows.forEach((row) => {
+          const itemSelect = row.querySelector(".cond-item");
+          const fieldSelect = row.querySelector(".cond-field");
+          const opSelect = row.querySelector(".cond-op");
+          const valuesInput = row.querySelector(".cond-values");
+
+          if (!itemSelect || !fieldSelect || !opSelect) return;
+          const item_name = itemSelect.value;
+          const field_key = fieldSelect.value;
+          const operator = opSelect.value;
+          if (!item_name || !field_key || !operator) return;
+
+          const target_values = valuesInput.value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+          result.push({ item_name, field_key, operator, target_values });
+        });
+
+        return result;
+      }
+      function updateCardTargetFields() {
+        const itemName = document.getElementById("cardTargetItem").value;
+        const select = document.getElementById("cardTargetField");
+        if (!select) return;
+        select.innerHTML = "";
+        getFieldsForItem(itemName).forEach((k) => {
+          const opt = document.createElement("option");
+          opt.value = k;
+          opt.textContent = k;
+          select.appendChild(opt);
+        });
+      }
+
+      function onConstraintKeywordInput() {
+        const input = document
+          .getElementById("constraintKeyword")
+          .value.trim()
+          .toUpperCase();
         const suggestions = document.getElementById("keywordSuggestions");
         const uniqueBuilder = document.getElementById("uniqueBuilder");
 
@@ -902,390 +1605,546 @@
         uniqueBuilder.style.display = "none";
 
         if ("UNIQUE".startsWith(input) || input.startsWith("UNI")) {
-            suggestions.innerHTML = `<div class="chip" onclick="selectUniqueKeyword()">UNIQUE</div>`;
+          suggestions.innerHTML = `<div class="chip" onclick="selectUniqueKeyword()">UNIQUE</div>`;
         }
-    }
+      }
 
-    function selectUniqueKeyword() {
+      function selectUniqueKeyword() {
         document.getElementById("constraintKeyword").value = "UNIQUE";
         document.getElementById("keywordSuggestions").innerHTML = "";
         document.getElementById("uniqueBuilder").style.display = "block";
         updateUniqueFields();
         updateGroupFields();
-    }
+      }
 
-    function getFieldsForItem(itemName) {
+      function getFieldsForItem(itemName) {
         const meta = itemsMeta[itemName];
         if (!meta) return ["id"];
 
         const keys = new Set(["id"]);
 
         if (meta.fields) {
-            Object.keys(meta.fields).forEach(k => keys.add(k));
+          Object.keys(meta.fields).forEach((k) => keys.add(k));
         }
-        (meta.members || []).forEach(m => {
-            const f = m.fields || {};
-            Object.keys(f).forEach(k => keys.add(k));
+        (meta.members || []).forEach((m) => {
+          const f = m.fields || {};
+          Object.keys(f).forEach((k) => keys.add(k));
         });
 
         return Array.from(keys);
-    }
+      }
 
-    function updateUniqueFields() {
+      function updateUniqueFields() {
         const itemName = document.getElementById("uniqueItemSelect").value;
         const select = document.getElementById("uniqueFieldSelect");
         select.innerHTML = "";
-        getFieldsForItem(itemName).forEach(k => {
-            select.innerHTML += `<option value="${k}">${k}</option>`;
+        getFieldsForItem(itemName).forEach((k) => {
+          select.innerHTML += `<option value="${k}">${k}</option>`;
         });
-    }
+      }
 
-    function updateGroupFields() {
+      function updateGroupFields() {
         const itemName = document.getElementById("groupItemSelect").value;
         const select = document.getElementById("groupFieldSelect");
         select.innerHTML = "";
-        getFieldsForItem(itemName).forEach(k => {
-            select.innerHTML += `<option value="${k}">${k}</option>`;
+        getFieldsForItem(itemName).forEach((k) => {
+          select.innerHTML += `<option value="${k}">${k}</option>`;
         });
-    }
+      }
 
-    function describeConstraint(c) {
+      function describeConstraint(c) {
         const entry = Object.entries(c.rule || {})[0];
         if (!entry) return "Unknown";
 
         const [kind, details] = entry;
 
         if (kind === "GlobalAllDifferent") {
-            const u = details.unique_item_field || "";
-            const g = details.group_item_field || "";
-            const [uItem, uField] = u.split(":");
-            const [gItem, gField] = g.split(":");
-            return `For each ${gItem}.${gField}, the ${uItem}.${uField} must be different.`;
+          const u = details.unique_item_field || "";
+          const g = details.group_item_field || "";
+          const [uItem, uField] = u.split(":");
+          const [gItem, gField] = g.split(":");
+          return `For each ${gItem}.${gField}, the ${uItem}.${uField} must be different.`;
         }
         if (kind === "MultiAssignmentCheck") {
-            if (c.name === "No Friday Afternoon") {
-                return "Avoid Friday lectures after 15:00 (soft).";
-            }
-            return "Rule checked per assignment.";
+          if (c.name === "No Friday Afternoon") {
+            return "Avoid Friday lectures after 15:00 (soft).";
+          }
+          return "Rule checked per assignment.";
         }
         if (kind === "GlobalCardinality") {
-            return `Limit how often ${details.target_item_field || "item"} appears.`;
+          return `Limit how often ${
+            details.target_item_field || "item"
+          } appears.`;
         }
         if (kind === "GlobalTemporalPrecedence") {
-            return "Enforce an order between two types of events.";
+          return "Enforce an order between two types of events.";
         }
         return `Constraint type ${kind}`;
-    }
+      }
 
-    function renderConstraints() {
+      function renderConstraints() {
         const el = document.getElementById("constraintsList");
         el.innerHTML = "";
+
         constraintsCache.forEach((c, idx) => {
-            const entry = Object.entries(c.rule || {})[0] || [];
-            const kind = entry[0] || "Unknown";
-            const weight = c.weight ?? 0;
-            const pillClass = weight >= 100 ? "pill-strong" : "pill-soft";
+          const entry = Object.entries(c.rule || {})[0] || [];
+          const kind = entry[0] || "Unknown";
+          const weight = c.weight ?? 0;
+          const pillClass = weight >= 100 ? "pill-strong" : "pill-soft";
 
-            el.innerHTML += `
-                <div class="list-item">
-                    <div><strong>${c.name}</strong></div>
-                    <div class="small">
-                        <span class="pill ${pillClass}">Weight ${weight}</span>
-                        <span class="pill">${kind}</span>
-                    </div>
-                    <div class="small">${describeConstraint(c)}</div>
-                    <div style="margin-top:2px;">
-                        <button class="btn btn-small" onclick="startEditConstraint(${idx})">Edit</button>
-                        <button class="btn btn-small" onclick="deleteConstraint(${idx})">Delete</button>
-                    </div>
-                </div>
-            `;
+          const wrapper = document.createElement("div");
+          wrapper.className = "list-item";
+
+          // title
+          const titleDiv = document.createElement("div");
+          const strong = document.createElement("strong");
+          strong.textContent = c.name;
+          titleDiv.appendChild(strong);
+          wrapper.appendChild(titleDiv);
+
+          // pills
+          const pillsDiv = document.createElement("div");
+          pillsDiv.className = "small";
+
+          const weightSpan = document.createElement("span");
+          weightSpan.className = "pill " + pillClass;
+          weightSpan.textContent = `Weight ${weight}`;
+          pillsDiv.appendChild(weightSpan);
+
+          const kindSpan = document.createElement("span");
+          kindSpan.className = "pill";
+          kindSpan.textContent = kind;
+          pillsDiv.appendChild(kindSpan);
+
+          wrapper.appendChild(pillsDiv);
+
+          // description
+          const descDiv = document.createElement("div");
+          descDiv.className = "small";
+          descDiv.textContent = describeConstraint(c);
+          wrapper.appendChild(descDiv);
+
+          // actions
+          const actionsDiv = document.createElement("div");
+          actionsDiv.style.marginTop = "2px";
+
+          const editBtn = document.createElement("button");
+          editBtn.className = "btn btn-small";
+          editBtn.textContent = "Edit";
+          editBtn.onclick = () => startEditConstraint(idx);
+          actionsDiv.appendChild(editBtn);
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "btn btn-small";
+          delBtn.textContent = "Delete";
+          delBtn.onclick = () => deleteConstraint(idx);
+          actionsDiv.appendChild(delBtn);
+
+          wrapper.appendChild(actionsDiv);
+
+          el.appendChild(wrapper);
         });
-    }
-
-    function startEditConstraint(idx) {
+      }
+      function startEditConstraint(idx) {
         const c = constraintsCache[idx];
         if (!c) return;
 
         editingConstraintOriginalName = c.name;
-        document.getElementById("constraintName").value = c.name;
-        document.getElementById("constraintWeight").value = c.weight;
+
+        const nameInput = document.getElementById("constraintName");
+        const weightInput = document.getElementById("constraintWeight");
+        const typeSelect = document.getElementById("constraintType");
+        const rawBox = document.getElementById("constraintRaw");
+
+        if (nameInput) nameInput.value = c.name || "";
+        if (weightInput) weightInput.value = c.weight ?? 0;
+        if (rawBox) rawBox.textContent = JSON.stringify(c.rule || {}, null, 2);
 
         const entry = Object.entries(c.rule || {})[0];
-        if (!entry) return;
+        if (!entry) {
+          if (typeSelect) typeSelect.value = "";
+          onConstraintTypeChange();
+          return;
+        }
 
         const [kind, details] = entry;
+        if (typeSelect) typeSelect.value = kind;
+        onConstraintTypeChange();
+
         if (kind === "GlobalAllDifferent") {
-            document.getElementById("constraintKeyword").value = "UNIQUE";
-            document.getElementById("keywordSuggestions").innerHTML = "";
-            document.getElementById("uniqueBuilder").style.display = "block";
+          const uFieldRaw = details.unique_item_field || "";
+          const gFieldRaw = details.group_item_field || "";
+          const [uItem, uField] = uFieldRaw.split(":");
+          const [gItem, gField] = gFieldRaw.split(":");
 
-            const [uItem, uField] = (details.unique_item_field || "").split(":");
-            const [gItem, gField] = (details.group_item_field || "").split(":");
+          if (uItem) document.getElementById("uniqueItemSelect").value = uItem;
+          updateUniqueFields();
+          if (uField)
+            document.getElementById("uniqueFieldSelect").value = uField;
 
-            document.getElementById("uniqueItemSelect").value = uItem || "";
-            updateUniqueFields();
-            if (uField) document.getElementById("uniqueFieldSelect").value = uField;
+          if (gItem) document.getElementById("groupItemSelect").value = gItem;
+          updateGroupFields();
+          if (gField)
+            document.getElementById("groupFieldSelect").value = gField;
+        } else if (kind === "MultiAssignmentCheck") {
+          document.getElementById("multiMode").value = details.mode || "Forbid";
+          document.getElementById("multiLogicalOp").value =
+            details.logical_op || "And";
 
-            document.getElementById("groupItemSelect").value = gItem || "";
-            updateGroupFields();
-            if (gField) document.getElementById("groupFieldSelect").value = gField;
+          const cont = document.getElementById("multiConditionsContainer");
+          if (cont) cont.innerHTML = "";
+          (details.conditions || []).forEach((cond) =>
+            addConditionRow("multiConditionsContainer", cond)
+          );
+        } else if (kind === "GlobalCardinality") {
+          const tfRaw = details.target_item_field || "";
+          const [tItem, tField] = tfRaw.split(":");
+          if (tItem) document.getElementById("cardTargetItem").value = tItem;
+          updateCardTargetFields();
+          if (tField) document.getElementById("cardTargetField").value = tField;
+
+          document.getElementById("cardMaxCount").value =
+            details.max_count ?? 1;
+
+          const scopeCont = document.getElementById("cardScopeContainer");
+          if (scopeCont) scopeCont.innerHTML = "";
+          (details.scope_conditions || []).forEach((cond) =>
+            addConditionRow("cardScopeContainer", cond)
+          );
         }
-    }
+      }
 
-    async function deleteConstraint(idx) {
+      async function deleteConstraint(idx) {
         const c = constraintsCache[idx];
         if (!c) return;
         if (!confirm(`Delete constraint "${c.name}"?`)) return;
 
         await fetch(`${API}/constraints/${encodeURIComponent(c.name)}`, {
-            method: "DELETE",
+          method: "DELETE",
         });
 
         log(`Constraint deleted: ${c.name}`);
         await loadConstraints();
-    }
+      }
+      async function saveConstraint() {
+        const name =
+          document.getElementById("constraintName").value.trim() ||
+          "Constraint";
+        const weight =
+          parseInt(document.getElementById("constraintWeight").value, 10) || 0;
+        const type = document.getElementById("constraintType").value;
 
-    async function createUniqueConstraint() {
-        const name = document.getElementById("constraintName").value.trim() || "Unique constraint";
-        const weight = parseInt(document.getElementById("constraintWeight").value, 10) || 100;
+        if (!type) return;
 
-        const uniqueItem = document.getElementById("uniqueItemSelect").value;
-        const uniqueField = document.getElementById("uniqueFieldSelect").value || "id";
-        const groupItem  = document.getElementById("groupItemSelect").value;
-        const groupField = document.getElementById("groupFieldSelect").value || "id";
+        let rule = null;
 
-        if (!uniqueItem || !groupItem) return;
+        if (type === "GlobalAllDifferent") {
+          const uniqueItem = document.getElementById("uniqueItemSelect").value;
+          const uniqueField =
+            document.getElementById("uniqueFieldSelect").value || "id";
+          const groupItem = document.getElementById("groupItemSelect").value;
+          const groupField =
+            document.getElementById("groupFieldSelect").value || "id";
+          if (!uniqueItem || !groupItem) return;
 
-        const rule = {
+          rule = {
             GlobalAllDifferent: {
-                unique_item_field: `${uniqueItem}:${uniqueField}`,
-                group_item_field: `${groupItem}:${groupField}`,
+              unique_item_field: `${uniqueItem}:${uniqueField}`,
+              group_item_field: `${groupItem}:${groupField}`,
             },
-        };
+          };
+        } else if (type === "MultiAssignmentCheck") {
+          const mode = document.getElementById("multiMode").value;
+          const logical_op = document.getElementById("multiLogicalOp").value;
+          const conditions = readConditions("multiConditionsContainer");
+          if (!conditions.length) return;
 
-        if (editingConstraintOriginalName && editingConstraintOriginalName === name) {
-            await fetch(`${API}/constraints/${encodeURIComponent(editingConstraintOriginalName)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ constraint: { name, weight, rule } }),
-            });
-            log(`Constraint updated: ${name}`);
-        } else {
-            await fetch(`${API}/constraints`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ constraint: { name, weight, rule } }),
-            });
-            log(`Constraint created: ${name}`);
+          rule = {
+            MultiAssignmentCheck: {
+              conditions,
+              logical_op,
+              mode,
+            },
+          };
+        } else if (type === "GlobalCardinality") {
+          const targetItem = document.getElementById("cardTargetItem").value;
+          const targetField =
+            document.getElementById("cardTargetField").value || "id";
+          const max_count =
+            parseInt(document.getElementById("cardMaxCount").value, 10) || 0;
+          if (!targetItem || !max_count) return;
+
+          const scope_conditions = readConditions("cardScopeContainer");
+          rule = {
+            GlobalCardinality: {
+              target_item_field: `${targetItem}:${targetField}`,
+              max_count,
+              scope_conditions: scope_conditions.length
+                ? scope_conditions
+                : null,
+            },
+          };
         }
 
-        editingConstraintOriginalName = null;
-        document.getElementById("constraintName").value = "";
+        if (!rule) return;
+
+        const payload = { constraint: { name, weight, rule } };
+
+        if (
+          editingConstraintOriginalName &&
+          editingConstraintOriginalName === name
+        ) {
+          await fetch(
+            `${API}/constraints/${encodeURIComponent(
+              editingConstraintOriginalName
+            )}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }
+          );
+          log(`Constraint updated: ${name}`);
+        } else {
+          await fetch(`${API}/constraints`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          log(`Constraint created: ${name}`);
+        }
+
+        resetConstraintForm();
         await loadConstraints();
-    }
+      }
 
-    // ---------- TIMETABLE ----------
-function renderTimetable(schedule) {
-    const wrapper = document.getElementById("timetableWrapper");
-    if (!schedule || !Array.isArray(schedule.assignments)) {
-        wrapper.innerHTML = "<p class='small' style='margin-top:6px;'>No schedule yet.</p>";
-        return;
-    }
+      // ---------- TIMETABLE ----------
+      function renderTimetable(schedule) {
+        const wrapper = document.getElementById("timetableWrapper");
+        if (!schedule || !Array.isArray(schedule.assignments)) {
+          wrapper.innerHTML =
+            "<p class='small' style='margin-top:6px;'>No schedule yet.</p>";
+          return;
+        }
 
-    const dayOrder = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-    const daysSet = new Set();
-    const timeSet = new Set();
+        const dayOrder = [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ];
+        const daysSet = new Set();
+        const timeSet = new Set();
 
-    Object.values(timesById).forEach(ts => {
-        if (!ts) return;
-        if (ts.day) daysSet.add(ts.day);
-        if (ts.start && ts.end) timeSet.add(`${ts.start}–${ts.end}`);
-    });
+        Object.values(timesById).forEach((ts) => {
+          if (!ts) return;
+          if (ts.day) daysSet.add(ts.day);
+          if (ts.start && ts.end) timeSet.add(`${ts.start}–${ts.end}`);
+        });
 
-    const days = Array.from(daysSet).sort((a,b) => {
-        const ia = dayOrder.indexOf(a);
-        const ib = dayOrder.indexOf(b);
-        if (ia === -1 && ib === -1) return a.localeCompare(b);
-        if (ia === -1) return 1;
-        if (ib === -1) return -1;
-        return ia - ib;
-    });
+        const days = Array.from(daysSet).sort((a, b) => {
+          const ia = dayOrder.indexOf(a);
+          const ib = dayOrder.indexOf(b);
+          if (ia === -1 && ib === -1) return a.localeCompare(b);
+          if (ia === -1) return 1;
+          if (ib === -1) return -1;
+          return ia - ib;
+        });
 
-    const times = Array.from(timeSet).sort();
-    const grid = {};
-    times.forEach(t => {
-        grid[t] = {};
-        days.forEach(d => grid[t][d] = "");
-    });
+        const times = Array.from(timeSet).sort();
+        const grid = {};
+        times.forEach((t) => {
+          grid[t] = {};
+          days.forEach((d) => (grid[t][d] = ""));
+        });
 
-    (schedule.assignments || []).forEach(a => {
-        const courseName = coursesById[a.task_id] || `Course #${a.task_id}`;
-        const roomId     = a.resources?.Room;
-        const timeId     = a.resources?.TimeSlot;
-        const lectId     = a.resources?.Lecturer;
+        (schedule.assignments || []).forEach((a) => {
+          const courseName = coursesById[a.task_id] || `Course #${a.task_id}`;
+          const roomId = a.resources?.Room;
+          const timeId = a.resources?.TimeSlot;
+          const lectId = a.resources?.Lecturer;
 
-        const roomName = roomId != null ? (roomsById[roomId] || `Room #${roomId}`) : "";
-        const lectName = lectId != null ? (lecturersById[lectId] || `Lecturer #${lectId}`) : "";
+          const roomName =
+            roomId != null ? roomsById[roomId] || `Room #${roomId}` : "";
+          const lectName =
+            lectId != null
+              ? lecturersById[lectId] || `Lecturer #${lectId}`
+              : "";
 
-        const ts = timeId != null ? timesById[timeId] : null;
-        if (!ts) return;
+          const ts = timeId != null ? timesById[timeId] : null;
+          if (!ts) return;
 
-        const timeKey = `${ts.start}–${ts.end}`;
-        const dayKey  = ts.day;
+          const timeKey = `${ts.start}–${ts.end}`;
+          const dayKey = ts.day;
 
-        if (!grid[timeKey] || !(dayKey in grid[timeKey])) return;
+          if (!grid[timeKey] || !(dayKey in grid[timeKey])) return;
 
-        let text = courseName;
-        if (lectName) text += `, ${lectName}`;
-        if (roomName) text += `, ${roomName}`;
+          let text = courseName;
+          if (lectName) text += `, ${lectName}`;
+          if (roomName) text += `, ${roomName}`;
 
-        grid[timeKey][dayKey] = grid[timeKey][dayKey]
+          grid[timeKey][dayKey] = grid[timeKey][dayKey]
             ? grid[timeKey][dayKey] + "<br>" + text
             : text;
-    });
-
-    let html = "<h2 style='margin-top:8px;'>📅 Timetable</h2>";
-    html += "<p class='small'>Time | columns by day. Empty = nothing scheduled.</p>";
-    html += "<table><thead><tr><th>Time</th>";
-    days.forEach(d => { html += `<th>${d}</th>`; });
-    html += "</tr></thead><tbody>";
-
-    times.forEach(t => {
-        html += `<tr><td>${t}</td>`;
-        days.forEach(d => {
-            html += `<td>${grid[t][d] || ""}</td>`;
         });
-        html += "</tr>";
-    });
 
-    html += "</tbody></table>";
-    wrapper.innerHTML = html;
-}
+        let html = "<h2 style='margin-top:8px;'>📅 Timetable</h2>";
+        html +=
+          "<p class='small'>Time | columns by day. Empty = nothing scheduled.</p>";
+        html += "<table><thead><tr><th>Time</th>";
+        days.forEach((d) => {
+          html += `<th>${d}</th>`;
+        });
+        html += "</tr></thead><tbody>";
 
-    // ---------- LOAD DATA ----------
+        times.forEach((t) => {
+          html += `<tr><td>${t}</td>`;
+          days.forEach((d) => {
+            html += `<td>${grid[t][d] || ""}</td>`;
+          });
+          html += "</tr>";
+        });
 
-    async function loadItemsAndMembers() {
-        Object.keys(itemsMeta).forEach(k => delete itemsMeta[k]);
-        Object.keys(coursesById).forEach(k => delete coursesById[k]);
-        Object.keys(roomsById).forEach(k => delete roomsById[k]);
-        Object.keys(timesById).forEach(k => delete timesById[k]);
-        Object.keys(lecturersById).forEach(k => delete lecturersById[k]);
+        html += "</tbody></table>";
+        wrapper.innerHTML = html;
+      }
+
+      // ---------- LOAD DATA ----------
+
+      async function loadItemsAndMembers() {
+        Object.keys(itemsMeta).forEach((k) => delete itemsMeta[k]);
+        Object.keys(coursesById).forEach((k) => delete coursesById[k]);
+        Object.keys(roomsById).forEach((k) => delete roomsById[k]);
+        Object.keys(timesById).forEach((k) => delete timesById[k]);
+        Object.keys(lecturersById).forEach((k) => delete lecturersById[k]);
 
         const itemsRes = await fetch(`${API}/items`);
         const itemsData = await itemsRes.json();
 
         for (const item of itemsData.items) {
-            const name = item.name;
-            itemsMeta[name] = {
-                item_set_type: item.item_set_type,
-                fields: predefinedSchemas[name] ? { ...predefinedSchemas[name] } : {},
-                members: [],
-            };
+          const name = item.name;
+          itemsMeta[name] = {
+            item_set_type: item.item_set_type,
+            fields: predefinedSchemas[name]
+              ? { ...predefinedSchemas[name] }
+              : {},
+            members: [],
+          };
         }
 
         for (const name of Object.keys(itemsMeta)) {
-            const res = await fetch(`${API}/items/${name}/members`);
-            const data = await res.json();
-            itemsMeta[name].members = data.members || [];
+          const res = await fetch(`${API}/items/${name}/members`);
+          const data = await res.json();
+          itemsMeta[name].members = data.members || [];
 
-            if (name === "Course") {
-                data.members.forEach(m => {
-                    const fields = m.fields || {};
-                    const courseName = valueToString(fields.name) || `Course #${m.id}`;
-                    coursesById[m.id] = courseName;
-                });
-            } else if (name === "Room") {
-                data.members.forEach(m => {
-                    const fields = m.fields || {};
-                    const roomName = valueToString(fields.name) || `Room #${m.id}`;
-                    roomsById[m.id] = roomName;
-                });
-            } else if (name === "TimeSlot") {
-                data.members.forEach(m => {
-                    const fields = m.fields || {};
-                    timesById[m.id] = {
-                        day:   valueToString(fields.day),
-                        start: valueToString(fields.start),
-                        end:   valueToString(fields.end),
-                    };
-                });
-            } else if (name === "Lecturer") {
-                data.members.forEach(m => {
-                    const fields = m.fields || {};
-                    const n = valueToString(fields.name) || `Lecturer #${m.id}`;
-                    lecturersById[m.id] = n;
-                });
-            }
+          if (name === "Course") {
+            data.members.forEach((m) => {
+              const fields = m.fields || {};
+              const courseName =
+                valueToString(fields.name) || `Course #${m.id}`;
+              coursesById[m.id] = courseName;
+            });
+          } else if (name === "Room") {
+            data.members.forEach((m) => {
+              const fields = m.fields || {};
+              const roomName = valueToString(fields.name) || `Room #${m.id}`;
+              roomsById[m.id] = roomName;
+            });
+          } else if (name === "TimeSlot") {
+            data.members.forEach((m) => {
+              const fields = m.fields || {};
+              timesById[m.id] = {
+                day: valueToString(fields.day),
+                start: valueToString(fields.start),
+                end: valueToString(fields.end),
+              };
+            });
+          } else if (name === "Lecturer") {
+            data.members.forEach((m) => {
+              const fields = m.fields || {};
+              const n = valueToString(fields.name) || `Lecturer #${m.id}`;
+              lecturersById[m.id] = n;
+            });
+          }
 
-            if (!itemsMeta[name].fields || Object.keys(itemsMeta[name].fields).length === 0) {
-                const inferred = {};
-                (itemsMeta[name].members || []).forEach(m => {
-                    const f = m.fields || {};
-                    Object.keys(f).forEach(k => { if (!inferred[k]) inferred[k] = "Text"; });
-                });
-                itemsMeta[name].fields = inferred;
-            }
+          if (
+            !itemsMeta[name].fields ||
+            Object.keys(itemsMeta[name].fields).length === 0
+          ) {
+            const inferred = {};
+            (itemsMeta[name].members || []).forEach((m) => {
+              const f = m.fields || {};
+              Object.keys(f).forEach((k) => {
+                if (!inferred[k]) inferred[k] = "Text";
+              });
+            });
+            itemsMeta[name].fields = inferred;
+          }
         }
 
         renderItemsList();
-    }
+      }
 
-    async function loadConstraints() {
+      async function loadConstraints() {
         const res = await fetch(`${API}/constraints`);
         const data = await res.json();
         constraintsCache = data.constraints || [];
         renderConstraints();
-    }
+      }
 
-    async function runSolver() {
+      async function runSolver() {
         document.getElementById("runBtn").disabled = true;
         log("Running solver…");
 
         const temp = parseFloat(document.getElementById("temperature").value);
         const cool = parseFloat(document.getElementById("coolingRate").value);
-        const iter = parseInt(document.getElementById("maxIterations").value, 10);
+        const iter = parseInt(
+          document.getElementById("maxIterations").value,
+          10
+        );
 
         try {
-            const res = await fetch(`${API}/solve`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    initial_temperature: temp,
-                    cooling_rate: cool,
-                    max_iterations: iter,
-                }),
-            });
+          const res = await fetch(`${API}/solve`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              initial_temperature: temp,
+              cooling_rate: cool,
+              max_iterations: iter,
+            }),
+          });
 
-            const data = await res.json();
-            log(`Solver finished. Final cost: ${data.final_cost}`);
-            renderTimetable(data.schedule);
+          const data = await res.json();
+          log(`Solver finished. Final cost: ${data.final_cost}`);
+          renderTimetable(data.schedule);
         } catch (e) {
-            log("Error while running solver: " + e.message);
+          log("Error while running solver: " + e.message);
         } finally {
-            document.getElementById("runBtn").disabled = false;
+          document.getElementById("runBtn").disabled = false;
         }
-    }
+      }
 
-    // ---------- INIT ----------
+      // ---------- INIT ----------
 
-    async function init() {
-        addItemFieldRow("name", "Text");
-        addItemFieldRow("capacity", "Integer");
+      async function init() {
+        resetItemForm();
 
         try {
-            await loadItemsAndMembers();
-            await loadConstraints();
-            document.getElementById("runBtn").disabled = false;
-            log("Data loaded. You can now edit items, members, constraints and run the solver.");
+          await loadItemsAndMembers();
+          await loadConstraints();
+          document.getElementById("runBtn").disabled = false;
+          log(
+            "Data loaded. You can now edit items, members, constraints and run the solver."
+          );
         } catch (e) {
-            log("Error loading initial data: " + e.message);
+          log("Error loading initial data: " + e.message);
         }
-    }
+      }
 
-    window.addEventListener("DOMContentLoaded", init);
-
-</script>
-
-</body>
+      window.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
 </html>
