@@ -12,8 +12,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::new(RwLock::new(constraints)),
     );
 
-    let app = scheduling_optimizer::Application::build(app_state, "127.0.0.1:3000").await?;
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let addr = format!("0.0.0.0:{}", port);
+    let app = scheduling_optimizer::Application::build(app_state, &addr).await?;
     app.run().await?;
+
 
     Ok(())
 }
